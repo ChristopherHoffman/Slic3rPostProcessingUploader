@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34321.82
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slic3rPostProcessingUploader", "Slic3rPostProcessingUploader.csproj", "{D191331F-9D96-4C48-BD68-3858D9577349}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D191331F-9D96-4C48-BD68-3858D9577349}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D191331F-9D96-4C48-BD68-3858D9577349}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D191331F-9D96-4C48-BD68-3858D9577349}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D191331F-9D96-4C48-BD68-3858D9577349}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {930C4FD4-71A4-48B6-B8A2-93B83D1847EE}
+	EndGlobalSection
+EndGlobal
