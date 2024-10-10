@@ -1,14 +1,28 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using Slic3rPostProcessingUploader.Services;
+using Slic3rPostProcessingUploader.Services.Parsers;
 using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
-Console.WriteLine("Hello, World!");
+// string newPrintUrl = "https://www.3dprintlog.com/prints/new/cura";
+// string apiUrl = "https://api.3dprintlog.com/api/Cura/settings";
+
+string newPrintUrl = "https://localhost:4200/prints/new/cura";
+string apiUrl = "https://localhost:5001/api/Cura/settings";
+
+// Convert the console to write to a local file
+var sw = new System.IO.StreamWriter("C:/tmp/slic3r-console-output.txt", true) { AutoFlush = true };
+Console.SetOut(sw);
 
 // Display a console writeline
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Starting the 3D Print Log Uploader");
 
 // Read all the current environment variables and filter to just the ones that start with "SLIC3R"
 var slic3rVariables = Environment.GetEnvironmentVariables()
@@ -22,66 +36,127 @@ var slic3rVariables = Environment.GetEnvironmentVariables()
 File.WriteAllText("C:/tmp/slic3r-environment-variables.json", "{" + string.Join(",", slic3rVariables) + "}");
 
 // Now get the string value of the first argument passed to the program
-var firstArgument = args.FirstOrDefault();
+var tempFileName = args.FirstOrDefault();
 
 // Read the contents of the file specified by the first argument
-var fileContents = File.ReadAllText(firstArgument!);
+var fileContents = File.ReadAllText(tempFileName!);
+
+// Get the output file name from the environment variable SLIC3R_PP_OUTPUT_NAME
+var outputFileName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
+
 
 // Save the contents of the file to a new file in the current directory
 File.WriteAllText("C:/tmp/slic3r-file-contents.txt", fileContents);
 
+// Dependency Injection
+
+
+
+// Parse the contents into a DTO
+var parser = new OrcaParser();
+var dto = parser.ParseGcode(fileContents);
+
+
+dto.settings.file_name = Path.GetFileName(outputFileName);
+
+// Convert the filename to a human readable name
+var fileNameWithoutExt = Path.GetFileNameWithoutExtension(outputFileName);
+
+dto.settings.print_name = GetTitle(fileNameWithoutExt);
+
+var versionService = new VersionService();
+
+dto.PluginVersion = versionService.GetVersion();
+
+
+// Save the DTO to a new file in the current directory
+File.WriteAllText("C:/tmp/slic3r-dto.json", dto.ToJSON());
+
 // Make an API request to the 3dprintlog.com website
 var client = new HttpClient();
-var response = await client.GetAsync("https://www.3dprintlog.com");
 
-// Read the response content as a string
-var responseContent = await response.Content.ReadAsStringAsync();
+// Make a POST request to the 3dprintlog.com website with the contents of the dto
+var content = new StringContent(dto.ToJSON(), Encoding.UTF8, "application/json");
 
-// Save the response content to a new file in the current directory
-File.WriteAllText("C:/tmp/slic3r-api-response.html", responseContent);
-
-// Open a browser window to the 3dprintlog.com website
-OpenBrowser("https://www.3dprintlog.com");
-
-void OpenBrowser(string url)
+try
 {
-    try
+    var response = await client.PostAsync(apiUrl, content);
+
+    Console.WriteLine($"Response: {response.ToString()}");
+
+    var responseContent = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
     {
-        Process.Start(url);
+        File.WriteAllText("C:/tmp/3d-print-log-api-response.json", responseContent); 
+        throw new Exception($"Failed to upload to 3dprintlog.com: {response.StatusCode}");
     }
-    catch
+
+    File.WriteAllText("C:/tmp/3d-print-log-api-response.json", responseContent);
+
+
+    // Get the newSettingId from the response
+    string guid = responseContent.Replace("{", "").Replace("}", "").Split(":")[1].Replace("\"", "");
+
+    // Open the new print page in the browser
+
+    Browser browser = new();
+
+    browser.Open(newPrintUrl + "?cura_version=" + dto.CuraVersion + "&plugin_version=" + dto.PluginVersion + "&settingId=" + guid);
+}
+catch (Exception e)
+{
+
+    Console.WriteLine(e.Message);
+}
+
+
+string GetTitle(string filename)
+{
+    var snakeCaseFilename = ToSnakeCase(filename);
+    var title = string.Join(" ", snakeCaseFilename.Split('_')
+        .Where(segment => !segment.Equals("gcode", StringComparison.OrdinalIgnoreCase))
+        .Select(s => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s)))
+        .Trim();
+
+    // Limit to 100 characters
+    if (title.Length > 100)
     {
-        // hack because of this: https://github.com/dotnet/corefx/issues/10361
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        title = title.Substring(0, 100);
+    }
+
+    return title;
+}
+
+string ToSnakeCase(string text)
+{
+    if (text.Length < 2)
+    {
+        return text.ToLowerInvariant();
+    }
+    var sb = new StringBuilder();
+    sb.Append(char.ToLowerInvariant(text[0]));
+    for (int i = 1; i < text.Length; ++i)
+    {
+        char c = text[i];
+        if (char.IsUpper(c))
         {
-            url = url.Replace("&", "^&");
-            Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            Process.Start("xdg-open", url);
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            Process.Start("open", url);
+            sb.Append('_');
+            sb.Append(char.ToLowerInvariant(c));
         }
         else
         {
-            throw;
+            sb.Append(c);
         }
     }
+    return sb.ToString();
 }
 
-public class StringJson
-{
-    public string? Value { get; set; }
-    public string? Key { get; set; }
-}
 
-[JsonSourceGenerationOptions(WriteIndented = true)]
-[JsonSerializable(typeof(StringJson))]
-internal partial class SourceGenerationContext : JsonSerializerContext
-{
-}
+// Save the response content to a new file in the current directory
 
+
+
+
+// Open a browser window to the 3dprintlog.com website
 
