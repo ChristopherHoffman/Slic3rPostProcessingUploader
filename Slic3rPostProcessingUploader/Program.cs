@@ -57,7 +57,7 @@ File.WriteAllText("C:/tmp/slic3r-file-contents.txt", fileContents);
 
 
 // Parse the contents into a DTO
-var parser = new OrcaParser();
+var parser = new OrcaParser("");
 var dto = parser.ParseGcode(fileContents);
 
 

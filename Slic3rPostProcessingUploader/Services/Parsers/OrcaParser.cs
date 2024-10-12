@@ -5,6 +5,13 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 {
     internal class OrcaParser: IGcodeParser
     {
+        private readonly string noteTemplate;
+
+        public OrcaParser(string noteTemplate)
+        {
+            this.noteTemplate = noteTemplate;
+        }
+
         public CuraSettingDto ParseGcode(string gcode)
         {
             var dto = new CuraSettingDto();
@@ -16,7 +23,9 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             // Convert double to int
             settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
 
-            settings.note = ParseSettingsIntoNotes(gcode);
+            
+            // settings.note = ParseSettingsIntoNotes(gcode);
+            settings.note = RenderNoteTemplate(gcode);
 
             string? snapshot = getSnapshot(gcode);
             if (snapshot != null)
@@ -30,6 +39,45 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             dto.settings = settings;
 
             return dto;
+        }
+
+        /// <summary>
+        /// The note template will have placeholders that will be replaced with the actual values from the gcode.
+        /// </summary>
+        /// <param name="gcode"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private string RenderNoteTemplate(string gcode)
+        {
+            // Given the this.noteTemplate string which contains placeholders wrapped in {{ and }}, replace the placeholders with the actual values from the gcode.
+            // For example, if the noteTemplate is "This is a {{test}}", and the gcode contains "test = hello", the output should be "This is a hello".
+
+            if (string.IsNullOrEmpty(this.noteTemplate))
+            {
+                return ParseSettingsIntoNotes(gcode);
+            }
+
+            string template = this.noteTemplate;
+
+            // Find each placeholder in the noteTemplate
+            var matches = Regex.Matches(template, "{{(.*?)}}");
+            if (matches != null) {
+                foreach (Match match in matches)
+                {
+                    // Get the placeholder name
+                    var placeholder = match.Groups[1].Value;
+
+                    // Convert into orca-slicers format
+                    string searchString = "; " + placeholder;
+
+                    // Find the value of the placeholder in the gcode
+                    var value = ParseSettingAsString(gcode, searchString);
+                    // Replace the placeholder with the value
+                    template = template.Replace( match.Value, value);
+                }
+            }
+
+            return template;
         }
 
         private string GetSlicerVersion(string gcode)
