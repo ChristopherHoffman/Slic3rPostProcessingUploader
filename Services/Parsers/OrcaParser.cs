@@ -190,9 +190,9 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         "; first_layer_height",
         "; layer_height",
         "; wall_loops",
-        "; top_solid_layers",
-        "; bottom_solid_layers",
-        "; fill_density",
+        "; top_shell_layers",
+        "; bottom_shell_layers",
+        "; sparse_infill_density",
         "; perimeter_speed",
         "; infill_speed",
         "; travel_speed",
@@ -214,7 +214,9 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         "; raft_layers",
         "; total_layer_count",
         "; pressure_advance",
-        "; pressure_advance_smooth"
+        "; pressure_advance_smooth",
+        "; print_settings_id",
+        "; printer_settings_id"
     };
 
             notes.AppendLine("Settings:");
