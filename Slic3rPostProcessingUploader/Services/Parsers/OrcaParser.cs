@@ -14,7 +14,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             settings.estimated_print_time_seconds = ParseEstimatedPrintTime(gcode);
 
             // Convert double to int
-            settings.material_used_mg = (int)EstimateFilamentUsageInMg(gcode);
+            settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
 
             settings.note = ParseSettingsIntoNotes(gcode);
 
@@ -109,6 +109,11 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 
         public double? EstimateFilamentUsageInMg(string gcode)
         {
+            if (string.IsNullOrEmpty(gcode))
+            {
+                return 0;
+            }
+
             // Check to see if the user setup their filament densities, thus we can directly return filament usage.
             var filamentUsedInGrams = ParseSettingAsNumber(gcode, "; filament used \\[g\\]");
             if (filamentUsedInGrams > 0)
@@ -121,13 +126,13 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             var filamentDiameter = double.Parse(ParseSettingAsString(gcode, "; filament_diameter").Split(',')[0]);
             if (double.IsNaN(filamentDiameter))
             {
-                return null;
+                return 0;
             }
             var filamentUsageLengthInMM = double.Parse(ParseSettingAsString(gcode, "; filament used \\[mm\\]"));
 
             if (double.IsNaN(filamentUsageLengthInMM))
             {
-                return null;
+                return 0;
             }
 
             if (filamentType.Contains("PLA"))
@@ -143,7 +148,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 return CalculateWeightInMg(MaterialDensities.Materials.PETG, filamentUsageLengthInMM, filamentDiameter);
             }
 
-            return null;
+            return 0;
         }
 
         private double CalculateWeightInMg(double materialDensityGramsPerCubicCm, double lengthInMm, double diameterInMm)

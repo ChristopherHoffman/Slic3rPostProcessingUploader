@@ -11,6 +11,10 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Slic3rPostProcessingUploaderUnitTests")]
+
 // string newPrintUrl = "https://www.3dprintlog.com/prints/new/cura";
 // string apiUrl = "https://api.3dprintlog.com/api/Cura/settings";
 
