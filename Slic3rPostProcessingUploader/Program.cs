@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Slic3rPostProcessingUploader.Services;
+﻿using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
 using System.Collections;
 using System.Globalization;
@@ -10,169 +9,135 @@ using System.Text;
 
 ArgumentParser arguments = new(args);
 
-string newPrintUrl;
-string apiUrl;
+string trackingId = "462905613"; // Replace with your Google Analytics Tracking ID
+string clientId = Guid.NewGuid().ToString(); // Generate a unique client ID
 
-if (arguments.UseLocalDev)
-{
-    newPrintUrl = "https://localhost:4200/prints/new/cura";
-    apiUrl = "https://localhost:5001/api/Cura/settings";
-}
-else
-{
-    newPrintUrl = "https://www.3dprintlog.com/prints/new/cura";
-    apiUrl = "https://api.3dprintlog.com/api/Cura/settings";
-}
+string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
+string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
 
-// Convert the console to write to a local file
+SetupDebugging(arguments.DebugPath);
 
-if (!string.IsNullOrEmpty(arguments.DebugPath))
+Console.WriteLine("Starting the 3D Print Log Uploader");
+
+LogEnvironmentVariables(arguments.DebugPath);
+
+string fileContents = File.ReadAllText(arguments.InputFile);
+LogFileContents(arguments.DebugPath, fileContents);
+
+string template = GetTemplate(arguments);
+OrcaParser parser = new(template);
+CuraSettingDto dto = parser.ParseGcode(fileContents);
+
+dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
+dto.settings.print_name = GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
+dto.PluginVersion = new VersionService().GetVersion();
+
+LogDto(arguments.DebugPath, dto);
+
+await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
+
+void SetupDebugging(string debugPath)
 {
-    // Check if that path exists and if not create it
-    if (!Directory.Exists(arguments.DebugPath))
+    if (!string.IsNullOrEmpty(debugPath))
     {
-        _ = Directory.CreateDirectory(arguments.DebugPath);
+        if (!Directory.Exists(debugPath))
+        {
+            _ = Directory.CreateDirectory(debugPath);
+        }
+
+        string debugFileName = "slic3r-debug.txt";
+        string path = Path.Combine(debugPath, debugFileName);
+
+        StreamWriter sw = new(path, true) { AutoFlush = true };
+        Console.SetOut(sw);
+
+        Console.WriteLine($"Debugging enabled, logging to {debugPath}");
     }
 }
 
-if (!string.IsNullOrEmpty(arguments.DebugPath))
+void LogEnvironmentVariables(string debugPath)
 {
-    string debugFileName = "slic3r-debug.txt";
-    string path = Path.Combine(arguments.DebugPath, debugFileName);
+    if (!string.IsNullOrEmpty(debugPath))
+    {
+        IEnumerable<string> slic3rVariables = Environment.GetEnvironmentVariables()
+            .Cast<DictionaryEntry>()
+            .Where(x => x.Key.ToString().StartsWith("SLIC3R"))
+            .ToDictionary(x => x.Key, x => x.Value)
+            .Select(d => string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value)));
 
-    StreamWriter sw = new(path, true) { AutoFlush = true };
-    Console.SetOut(sw);
-
-    Console.WriteLine($"Debugging enabled, logging to {arguments.DebugPath}");
+        string envVarFileName = "slic3r-environment-variables.json";
+        string path = Path.Combine(debugPath, envVarFileName);
+        File.WriteAllText(path, "{" + string.Join(",", slic3rVariables) + "}");
+    }
 }
 
-// Display a console writeline
-Console.WriteLine("Starting the 3D Print Log Uploader");
-
-
-if (!string.IsNullOrEmpty(arguments.DebugPath))
+void LogFileContents(string debugPath, string fileContents)
 {
-    // Read all the current environment variables and filter to just the ones that start with "SLIC3R"
-    IEnumerable<string> slic3rVariables = Environment.GetEnvironmentVariables()
-        .Cast<DictionaryEntry>()
-        .Where(x => x!.Key!.ToString()!.StartsWith("SLIC3R"))
-        .ToDictionary(x => x.Key, x => x.Value)
-        .Select(d =>
-            string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value)));
-
-    // Save the filtered environment variables to a file in the current directory
-    string envVarFileName = "slic3r-environment-variables.json";
-    string path = Path.Combine(arguments.DebugPath, envVarFileName);
-    File.WriteAllText(path, "{" + string.Join(",", slic3rVariables) + "}");
+    if (!string.IsNullOrEmpty(debugPath))
+    {
+        string slicerFileContentsFileName = "slic3r-file-contents.txt";
+        string path = Path.Combine(debugPath, slicerFileContentsFileName);
+        File.WriteAllText(path, fileContents);
+    }
 }
 
-// Read the contents of the file specified by the first argument
-string fileContents = File.ReadAllText(arguments.InputFile);
-
-// Get the output file name from the environment variable SLIC3R_PP_OUTPUT_NAME
-string? outputFileName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
-
-if (!string.IsNullOrEmpty(arguments.DebugPath))
+string GetTemplate(ArgumentParser arguments)
 {
-    string slicerFileContentsFileName = "slic3r-file-contents.txt";
-    string path = Path.Combine(arguments.DebugPath, slicerFileContentsFileName);
-
-    // Save the contents of the file to a new file in the current directory
-    File.WriteAllText("C:/tmp/slic3r-file-contents.txt", fileContents);
-}
-
-// Dependency Injection
-
-
-// Parse the contents into a DTO
-string template = "";
-if (arguments.UseDefaultNoteTemplate)
-{
-    template = new OrcaDefaultNoteTemplate().getNoteTemplate();
-}
-else
-{
-    template = arguments.UseFullNoteTemplate
+    return arguments.UseDefaultNoteTemplate
+        ? new OrcaDefaultNoteTemplate().getNoteTemplate()
+        : arguments.UseFullNoteTemplate
         ? new OrcaFullNoteTemplate().getNoteTemplate()
         : new NoteTemplateFromFile(arguments.NoteTemplatePath).getNoteTemplate();
 }
 
-OrcaParser parser = new(template);
-CuraSettingDto dto = parser.ParseGcode(fileContents);
-
-
-dto.settings.file_name = Path.GetFileName(outputFileName);
-
-// Convert the filename to a human readable name
-string fileNameWithoutExt = Path.GetFileNameWithoutExtension(outputFileName);
-
-dto.settings.print_name = GetTitle(fileNameWithoutExt!);
-
-VersionService versionService = new();
-
-dto.PluginVersion = versionService.GetVersion();
-
-
-if (!string.IsNullOrEmpty(arguments.DebugPath))
+void LogDto(string debugPath, CuraSettingDto dto)
 {
-    string dtoFileName = "slic3r-dto.json";
-    string path = Path.Combine(arguments.DebugPath, dtoFileName);
-
-    // Save the DTO to a new file in the current directory
-    File.WriteAllText(path, dto.ToJSON());
+    if (!string.IsNullOrEmpty(debugPath))
+    {
+        string dtoFileName = "slic3r-dto.json";
+        string path = Path.Combine(debugPath, dtoFileName);
+        File.WriteAllText(path, dto.ToJSON());
+    }
 }
 
-// Make an API request to the 3dprintlog.com website
-HttpClient client = new();
-
-// Make a POST request to the 3dprintlog.com website with the contents of the dto
-StringContent content = new(dto.ToJSON(), Encoding.UTF8, "application/json");
-
-try
+async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, string newPrintUrl)
 {
-    HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+    HttpClient client = new();
+    StringContent content = new(dto.ToJSON(), Encoding.UTF8, "application/json");
 
-    Console.WriteLine($"Response: {response}");
-
-    string responseContent = await response.Content.ReadAsStringAsync();
-
-    if (!response.IsSuccessStatusCode)
+    try
     {
-        if (!string.IsNullOrEmpty(arguments.DebugPath))
+        HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+        Console.WriteLine($"Response: {response}");
+
+        string responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
         {
-            string responseFileName = "3d-print-log-api-response.json";
-            string path = Path.Combine(arguments.DebugPath, responseFileName);
-
-            File.WriteAllText(path, responseContent);
+            LogApiResponse(debugPath, responseContent);
+            throw new Exception($"Failed to upload to 3dprintlog.com: {response.StatusCode}");
         }
-        throw new Exception($"Failed to upload to 3dprintlog.com: {response.StatusCode}");
-    }
 
-    if (!string.IsNullOrEmpty(arguments.DebugPath))
+        LogApiResponse(debugPath, responseContent);
+
+        string guid = responseContent.Replace("{", "").Replace("}", "").Split(":")[1].Replace("\"", "");
+        new Browser().Open($"{newPrintUrl}?cura_version={dto.CuraVersion}&plugin_version={dto.PluginVersion}&settingId={guid}");
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.Message);
+    }
+}
+
+void LogApiResponse(string debugPath, string responseContent)
+{
+    if (!string.IsNullOrEmpty(debugPath))
     {
         string responseFileName = "3d-print-log-api-response.json";
-        string path = Path.Combine(arguments.DebugPath, responseFileName);
-
-        // Save the response content to a new file in the current directory
+        string path = Path.Combine(debugPath, responseFileName);
         File.WriteAllText(path, responseContent);
     }
-
-
-    // Get the newSettingId from the response
-    string guid = responseContent.Replace("{", "").Replace("}", "").Split(":")[1].Replace("\"", "");
-
-    // Open the new print page in the browser
-
-    Browser browser = new();
-
-    browser.Open(newPrintUrl + "?cura_version=" + dto.CuraVersion + "&plugin_version=" + dto.PluginVersion + "&settingId=" + guid);
 }
-catch (Exception e)
-{
-
-    Console.WriteLine(e.Message);
-}
-
 
 string GetTitle(string filename)
 {
@@ -182,13 +147,7 @@ string GetTitle(string filename)
         .Select(CultureInfo.CurrentCulture.TextInfo.ToTitleCase))
         .Trim();
 
-    // Limit to 100 characters
-    if (title.Length > 100)
-    {
-        title = title[..100];
-    }
-
-    return title;
+    return title.Length > 100 ? title[..100] : title;
 }
 
 string ToSnakeCase(string text)
@@ -214,12 +173,3 @@ string ToSnakeCase(string text)
     }
     return sb.ToString();
 }
-
-
-// Save the response content to a new file in the current directory
-
-
-
-
-// Open a browser window to the 3dprintlog.com website
-
