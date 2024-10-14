@@ -1,4 +1,9 @@
-﻿using Slic3rPostProcessingUploader.Services;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.WorkerService;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
 using System.Collections;
 using System.Globalization;
@@ -7,34 +12,72 @@ using System.Text;
 
 [assembly: InternalsVisibleTo("Slic3rPostProcessingUploaderUnitTests")]
 
-ArgumentParser arguments = new(args);
+try
+{
 
-string trackingId = "462905613"; // Replace with your Google Analytics Tracking ID
-string clientId = Guid.NewGuid().ToString(); // Generate a unique client ID
+    IServiceCollection services = new ServiceCollection();
 
-string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
-string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
+    services.AddLogging(loggingBuilder => loggingBuilder.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>("Category", LogLevel.Information));
+    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=fb08dc7f-aa66-49fc-81fe-f797f75095eb;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=74fff9d3-fe84-4357-9f68-6dace75d665d");
 
-SetupDebugging(arguments.DebugPath);
 
-Console.WriteLine("Starting the 3D Print Log Uploader");
+    IServiceProvider serviceProvider = services.BuildServiceProvider();
 
-LogEnvironmentVariables(arguments.DebugPath);
+    // Obtain logger instance from DI.
+    ILogger<Program> logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 
-string fileContents = File.ReadAllText(arguments.InputFile);
-LogFileContents(arguments.DebugPath, fileContents);
+    // Obtain TelemetryClient instance from DI, for additional manual tracking or to flush.
+    var telemetryClient = serviceProvider.GetRequiredService<TelemetryClient>();
 
-string template = GetTemplate(arguments);
-OrcaParser parser = new(template);
-CuraSettingDto dto = parser.ParseGcode(fileContents);
 
-dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
-dto.settings.print_name = GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
-dto.PluginVersion = new VersionService().GetVersion();
+    ArgumentParser arguments = new(args);
 
-LogDto(arguments.DebugPath, dto);
+    string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
+    string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
 
-await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
+    SetupDebugging(arguments.DebugPath);
+
+    Console.WriteLine("Starting the 3D Print Log Uploader");
+
+    LogEnvironmentVariables(arguments.DebugPath);
+
+    string fileContents = File.ReadAllText(arguments.InputFile);
+    LogFileContents(arguments.DebugPath, fileContents);
+
+    CuraSettingDto dto;
+
+    using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
+    {
+        string template = GetTemplate(arguments);
+        OrcaParser parser = new(template);
+        dto = parser.ParseGcode(fileContents);
+
+        dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
+        dto.settings.print_name = GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
+        dto.PluginVersion = new VersionService().GetVersion();
+
+        // Track the slicer, plugin version, and cura version as events
+        telemetryClient.TrackEvent("Parse", new Dictionary<string, string> { { "Slicer", dto.Slicer },
+            { "PluginVersion", dto.PluginVersion },
+        { "CuraVersion", dto.CuraVersion } });
+
+        LogDto(arguments.DebugPath, dto);
+
+    }
+
+    using (telemetryClient.StartOperation<RequestTelemetry>("uploading"))
+    {
+        await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
+    }
+
+    // Give application insights time to flush before closing
+    telemetryClient.Flush();
+    Task.Delay(2000).Wait();
+}
+catch (Exception e)
+{
+    Console.WriteLine(e.Message);
+}
 
 void SetupDebugging(string debugPath)
 {
