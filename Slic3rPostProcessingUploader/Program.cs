@@ -1,5 +1,6 @@
 ﻿using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.WorkerService;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -40,6 +41,18 @@ try
     string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
     string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
 
+    if (arguments.DisableTelemetry)
+    {
+        var telemetryConfig = serviceProvider.GetRequiredService<TelemetryConfiguration>();
+        telemetryConfig.DisableTelemetry = true;
+    }
+
+    if (arguments.DisplayHelp)
+    {
+        DisplayHelp(arguments);
+        return;
+    }
+
     SetupDebugging(arguments.DebugPath);
 
     Console.WriteLine("Starting the 3D Print Log Uploader");
@@ -53,7 +66,7 @@ try
 
     using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
     {
-        string template = GetTemplate(arguments);
+        string template = GetTemplate(arguments, telemetryClient);
         OrcaParser parser = new(template);
         dto = parser.ParseGcode(fileContents);
 
@@ -82,6 +95,16 @@ try
 catch (Exception e)
 {
     Console.WriteLine(e.Message);
+}
+
+void DisplayHelp(ArgumentParser arguments)
+{
+    arguments.DisplayHelpDocs();
+
+    // Prevent closing of the console window until the user presses a key or closes
+    Console.WriteLine("Press any key to exit");
+    Console.ReadKey();
+    return;
 }
 
 void SetupDebugging(string debugPath)
@@ -129,8 +152,22 @@ void LogFileContents(string debugPath, string fileContents)
     }
 }
 
-string GetTemplate(ArgumentParser arguments)
+string GetTemplate(ArgumentParser arguments, TelemetryClient telemetryClient)
 {
+    // Track the template used as an event
+    if (arguments.UseDefaultNoteTemplate)
+    {
+        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
+    }
+    else if (arguments.UseFullNoteTemplate)
+    {
+        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
+    }
+    else
+    {
+        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
+    }
+
     return arguments.UseDefaultNoteTemplate
         ? new OrcaDefaultNoteTemplate().getNoteTemplate()
         : arguments.UseFullNoteTemplate
