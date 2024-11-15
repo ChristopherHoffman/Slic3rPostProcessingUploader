@@ -14,11 +14,23 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - { name: Linux, os: ubuntu-latest }
-          - { name: Windows VS2022, os: windows-latest }
-          - { name: MacOS, os: macos-latest }
+          - {
+              name: Linux,
+              os: ubuntu-latest,
+              filepath: "/home/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net8.0/linux-x64/publish/",
+            }
+          - {
+              name: Windows VS2022,
+              os: windows-latest,
+              filepath: "D:\\a\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\bin\\Release\\net8.0\\win-x64\\publish\\",
+            }
+          - {
+              name: MacOS,
+              os: macos-latest,
+              filepath: "/Users/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net8.0/osx-arm64/publish/",
+            }
         dotnet:
-          - { name: .NET 8, version: "8.0.x" }
+          - { name: .NET 8, version: "8.0.x", filepath: "net8.0" }
 
     steps:
       - name: Checkout Repository
@@ -40,8 +52,8 @@ jobs:
         run: dotnet test --no-restore --verbosity normal
       - name: Publish
         run: dotnet publish --configuration Release
-      # - name: Upload Artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: publish-${{ matrix.platform.name }}-${{ matrix.dotnet.name }}
-      #     path: ./publish
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-${{ matrix.platform.name }}-${{ matrix.dotnet.name }}
+          path: ${{ matrix.platform.filepath }}
