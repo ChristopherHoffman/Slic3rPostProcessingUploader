@@ -9,6 +9,10 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 
         public OrcaParser(string noteTemplate)
         {
+            if (string.IsNullOrEmpty(noteTemplate)) {
+                throw new ArgumentNullException("noteTemplate", "Note Template is missing");
+            }
+
             this.noteTemplate = noteTemplate;
         }
 
@@ -24,7 +28,6 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
 
             
-            // settings.note = ParseSettingsIntoNotes(gcode);
             settings.note = RenderNoteTemplate(gcode);
 
             string? snapshot = getSnapshot(gcode);
@@ -51,12 +54,6 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         {
             // Given the this.noteTemplate string which contains placeholders wrapped in {{ and }}, replace the placeholders with the actual values from the gcode.
             // For example, if the noteTemplate is "This is a {{test}}", and the gcode contains "test = hello", the output should be "This is a hello".
-
-            if (string.IsNullOrEmpty(this.noteTemplate))
-            {
-                return ParseSettingsIntoNotes(gcode);
-            }
-
             string template = this.noteTemplate;
 
             // Find each placeholder in the noteTemplate
@@ -233,66 +230,5 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             }
             return string.Empty;
         }
-
-        private string ParseSettingsIntoNotes(string gcode)
-        {
-            var notes = new StringBuilder();
-
-            var settings = new List<string>
-    {
-        "; first_layer_height",
-        "; layer_height",
-        "; wall_loops",
-        "; top_shell_layers",
-        "; bottom_shell_layers",
-        "; sparse_infill_density",
-        "; perimeter_speed",
-        "; infill_speed",
-        "; travel_speed",
-        "; nozzle_diameter",
-        "; filament_type",
-        "; filament_diameter",
-        "; extrusion_multiplier",
-        "; nozzle_temperature",
-        "; first_layer_temperature",
-        "; bed_temperature",
-        "; first_layer_bed_temperature",
-        "; fan_always_on",
-        "; fan_below_layer_time",
-        "; spiral_vase",
-        "; brim_width",
-        "; support_material",
-        "; support_material_threshold",
-        "; support_material_enforce_layers",
-        "; raft_layers",
-        "; total_layer_count",
-        "; pressure_advance",
-        "; pressure_advance_smooth",
-        "; print_settings_id",
-        "; printer_settings_id"
-    };
-
-            notes.AppendLine("Settings:");
-            notes.AppendLine();
-
-
-            foreach (var setting in settings)
-            {
-                var settingValue = ParseSettingAsString(gcode, setting);
-                if (!string.IsNullOrEmpty(settingValue))
-                {
-                    // Remove the leading semicolon
-                    var cleanedSettingName = setting.Substring(2);
-
-                    notes.AppendLine($"  {cleanedSettingName}: {settingValue}");
-                }
-            }
-
-            return notes.ToString().TrimEnd().Replace("\r", "");
-        }
-
     }
-
-
-
 }
