@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request]
+on: [push]
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
