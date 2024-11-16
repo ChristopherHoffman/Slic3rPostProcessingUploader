@@ -9,11 +9,15 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 
         public OrcaParser(string noteTemplate)
         {
-            if (string.IsNullOrEmpty(noteTemplate)) {
-                throw new ArgumentNullException("noteTemplate", "Note Template is missing");
+            if (string.IsNullOrEmpty(noteTemplate))
+            {
+                var defaultTemplate = new OrcaDefaultNoteTemplate();
+                this.noteTemplate = defaultTemplate.getNoteTemplate();
             }
-
-            this.noteTemplate = noteTemplate;
+            else
+            {
+                this.noteTemplate = noteTemplate;
+            }
         }
 
         public CuraSettingDto ParseGcode(string gcode)

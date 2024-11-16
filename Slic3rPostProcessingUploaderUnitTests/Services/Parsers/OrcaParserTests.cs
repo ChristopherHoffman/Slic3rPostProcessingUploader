@@ -19,12 +19,8 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers
             var parser = new OrcaParser("");
             var result = parser.ParseGcode("");
             Assert.IsNotNull(result);
-            Assert.IsNotNull(result.settings);
-            Assert.AreEqual(0, result.settings.estimated_print_time_seconds);
-            Assert.AreEqual(0, result.settings.material_used_mg);
-            Assert.AreEqual("Settings:", result.settings.note);
-            Assert.AreEqual("OrcaSlicer", result.Slicer);
-            Assert.AreEqual("Unknown", result.CuraVersion);
+
+            Snapshot.Match(result);
         }
 
         [TestMethod]
