@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Slic3rPostProcessingUploader.Services.Parsers;
+﻿using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
 using Snapshooter.MSTest;
 
 
-namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers
+namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
 {
     [TestClass]
     public class OrcaParserTests
