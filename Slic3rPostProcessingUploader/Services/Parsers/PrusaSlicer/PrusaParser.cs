@@ -1,13 +1,13 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Slic3rPostProcessingUploader.Services.Parsers
+namespace Slic3rPostProcessingUploader.Services.Parsers.PrusaSlicer
 {
-    internal class OrcaParser: IGcodeParser
+    internal class PrusaParser: IGcodeParser
     {
         private readonly string noteTemplate;
 
-        public OrcaParser(string noteTemplate)
+        public PrusaParser(string noteTemplate)
         {
             if (string.IsNullOrEmpty(noteTemplate))
             {

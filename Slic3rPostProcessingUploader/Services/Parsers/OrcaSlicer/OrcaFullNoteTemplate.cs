@@ -1,4 +1,4 @@
-﻿namespace Slic3rPostProcessingUploader.Services
+﻿namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 {
     internal class OrcaFullNoteTemplate : INoteTemplate
     {

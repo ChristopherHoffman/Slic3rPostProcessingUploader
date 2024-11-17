@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
+using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
 using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
