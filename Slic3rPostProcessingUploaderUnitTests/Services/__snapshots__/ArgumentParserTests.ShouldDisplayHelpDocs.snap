@@ -1,0 +1,20 @@
+﻿Welcome to the 3D Print Log uploader for Slic3r-based slicers (OrcaSlicer, BambuSlicer, PrusaSlicer, Etc)
+This program will parse the gcode file and open up https://www.3dprintlog.com with the print details filled out.
+Create a free account at https://www.3dprintlog.com to use.
+
+Usage: In the Slicer's 'Post-Processing Scripts' section, add the path to this file
+Slic3rPostProcessingUploader.exe [options]
+
+Options:
+--help, -h: Display this help message. No settings will be uploaded if help is displayed.
+--local-dev: Use the local development environment
+--debug <path>: Save debug information to the specified path
+--opt-out-telemetry: Disable telemetry tracking. To help improve the plugin, we track slicer and plugin versions, as well as log errors that are thrown. No personal data is collected.
+
+Note Template Options:
+  --default: Use the default note template, which contains a curated list of general settings. Preferred by most users. The Default template is used if no other note template option is given.
+  --full: Use the full note template, which lists most of the settings available in the slicers
+  --template <path>: Use a custom note template. Absolute paths work better. See README for more details on syntax
+
+Example: Slic3rPostProcessingUploader --default --debug C:\debug\
+
