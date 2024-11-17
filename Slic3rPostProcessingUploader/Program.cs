@@ -25,7 +25,7 @@ try
                 loggingBuilder.AddFilter<ApplicationInsightsLoggerProvider>("Category", LogLevel.Information);
         });
 
-    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=fb08dc7f-aa66-49fc-81fe-f797f75095eb;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=74fff9d3-fe84-4357-9f68-6dace75d665d");
+    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=44698ebf-3363-4d89-b83d-5a0a616b22f5;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=ff0f0688-8e7b-4a59-b446-2969a28faae2");
 
 
     IServiceProvider serviceProvider = services.BuildServiceProvider();
