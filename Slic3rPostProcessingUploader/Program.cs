@@ -67,8 +67,9 @@ try
 
     using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
     {
-        string template = GetTemplate(arguments, telemetryClient);
-        OrcaParser parser = new(template);
+
+        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetryClient, fileContents);
+
         dto = parser.ParseGcode(fileContents);
 
         dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
@@ -151,29 +152,6 @@ void LogFileContents(string debugPath, string fileContents)
         string path = Path.Combine(debugPath, slicerFileContentsFileName);
         File.WriteAllText(path, fileContents);
     }
-}
-
-string GetTemplate(ArgumentParser arguments, TelemetryClient telemetryClient)
-{
-    // Track the template used as an event
-    if (arguments.UseDefaultNoteTemplate)
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
-    }
-    else if (arguments.UseFullNoteTemplate)
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
-    }
-    else
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
-    }
-
-    return arguments.UseDefaultNoteTemplate
-        ? new OrcaDefaultNoteTemplate().getNoteTemplate()
-        : arguments.UseFullNoteTemplate
-        ? new OrcaFullNoteTemplate().getNoteTemplate()
-        : new NoteTemplateFromFile(arguments.NoteTemplatePath).getNoteTemplate();
 }
 
 void LogDto(string debugPath, CuraSettingDto dto)
