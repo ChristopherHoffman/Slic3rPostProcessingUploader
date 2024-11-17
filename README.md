@@ -11,18 +11,28 @@ Create a free account at https://www.3dprintlog.com today and enjoy all the feat
 This is a new project, currently a work in progress. Feel free to help out by submitting requests, bug reports, or helping to make Pull Requests.
 
 - OrcaSlicer
+- PrusaSlicer
 
 #### Up Next:
 
-- PrusaSlicer
 - Bambu Studio
 - Super Slicer
 
 ## Usage:
 
-Usage: In the Slicer's 'Post-Processing Scripts' section, add the path to this file
+Download the [latest release for your operating system](https://github.com/ChristopherHoffman/Slic3rPostProcessingUploader/releases), and save the file to a location on your computer.
 
-`Slic3rPostProcessingUploader.exe [options]`
+In the Slicer's 'Post-Processing Scripts' section, add the path to this file. Full/Absolute paths are recommended:
+
+### Examples:
+
+Windows:
+
+`C:\\uploader\\Slic3rPostProcessingUploader.exe [options]`
+
+Mac/Linux:
+
+`~/uploader/Slic3rPostProcessingUploader [options]`
 
 ## Options:
 
