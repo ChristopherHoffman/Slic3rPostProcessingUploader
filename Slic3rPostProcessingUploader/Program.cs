@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
+using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
 using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -24,7 +25,7 @@ try
                 loggingBuilder.AddFilter<ApplicationInsightsLoggerProvider>("Category", LogLevel.Information);
         });
 
-    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=fb08dc7f-aa66-49fc-81fe-f797f75095eb;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=74fff9d3-fe84-4357-9f68-6dace75d665d");
+    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=44698ebf-3363-4d89-b83d-5a0a616b22f5;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=ff0f0688-8e7b-4a59-b446-2969a28faae2");
 
 
     IServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -66,8 +67,9 @@ try
 
     using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
     {
-        string template = GetTemplate(arguments, telemetryClient);
-        OrcaParser parser = new(template);
+
+        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetryClient, fileContents);
+
         dto = parser.ParseGcode(fileContents);
 
         dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
@@ -150,29 +152,6 @@ void LogFileContents(string debugPath, string fileContents)
         string path = Path.Combine(debugPath, slicerFileContentsFileName);
         File.WriteAllText(path, fileContents);
     }
-}
-
-string GetTemplate(ArgumentParser arguments, TelemetryClient telemetryClient)
-{
-    // Track the template used as an event
-    if (arguments.UseDefaultNoteTemplate)
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
-    }
-    else if (arguments.UseFullNoteTemplate)
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
-    }
-    else
-    {
-        telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
-    }
-
-    return arguments.UseDefaultNoteTemplate
-        ? new OrcaDefaultNoteTemplate().getNoteTemplate()
-        : arguments.UseFullNoteTemplate
-        ? new OrcaFullNoteTemplate().getNoteTemplate()
-        : new NoteTemplateFromFile(arguments.NoteTemplatePath).getNoteTemplate();
 }
 
 void LogDto(string debugPath, CuraSettingDto dto)

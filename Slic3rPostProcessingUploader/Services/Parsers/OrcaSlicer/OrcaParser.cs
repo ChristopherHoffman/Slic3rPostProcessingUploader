@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Slic3rPostProcessingUploader.Services.Parsers
+namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 {
-    internal class OrcaParser: IGcodeParser
+    internal class OrcaParser : IGcodeParser
     {
         private readonly string noteTemplate;
 
@@ -31,7 +31,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             // Convert double to int
             settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
 
-            
+
             settings.note = RenderNoteTemplate(gcode);
 
             string? snapshot = getSnapshot(gcode);
@@ -58,11 +58,12 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         {
             // Given the this.noteTemplate string which contains placeholders wrapped in {{ and }}, replace the placeholders with the actual values from the gcode.
             // For example, if the noteTemplate is "This is a {{test}}", and the gcode contains "test = hello", the output should be "This is a hello".
-            string template = this.noteTemplate;
+            string template = noteTemplate;
 
             // Find each placeholder in the noteTemplate
             var matches = Regex.Matches(template, "{{(.*?)}}");
-            if (matches != null) {
+            if (matches != null)
+            {
                 foreach (Match match in matches)
                 {
                     // Get the placeholder name
@@ -74,11 +75,52 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                     // Find the value of the placeholder in the gcode
                     var value = ParseSettingAsString(gcode, searchString);
                     // Replace the placeholder with the value
-                    template = template.Replace( match.Value, value);
+                    template = template.Replace(match.Value, value);
                 }
             }
 
             return template;
+        }
+
+        /// <summary>
+        /// Count the number of placeholders in the note template that are found in the gcode. Used for heuristic matching.
+        /// </summary>
+        /// <param name="gcode"></param>
+        /// <returns>The number of placeholders in the templates, and the number of successful matches for those placeholders</returns>
+        public (int numPlaceholders, int numMatches) CountTemplateMatches(string gcode)
+        {
+            int numPlaceholders = 0;
+            int numMatches = 0;
+
+            // Given the this.noteTemplate string which contains placeholders wrapped in {{ and }}, replace the placeholders with the actual values from the gcode.
+            // For example, if the noteTemplate is "This is a {{test}}", and the gcode contains "test = hello", the output should be "This is a hello".
+            string template = this.noteTemplate;
+
+            // Find each placeholder in the noteTemplate
+            var matches = Regex.Matches(template, "{{(.*?)}}");
+            if (matches != null)
+            {
+                foreach (Match match in matches)
+                {
+                    numPlaceholders++;
+
+                    // Get the placeholder name
+                    var placeholder = match.Groups[1].Value;
+
+                    // Convert into orca-slicers format
+                    string searchString = "; " + placeholder;
+
+                    // Find the value of the placeholder in the gcode
+                    var value = ParseSettingAsString(gcode, searchString);
+
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        numMatches++;
+                    }
+                }
+            }
+
+            return (numPlaceholders, numMatches);
         }
 
         private string GetSlicerVersion(string gcode)
@@ -102,7 +144,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 return snapshotMatch.Groups[1].Value.Replace("\n; ", "").Replace(";", "").Trim();
             }
             return null;
-        }   
+        }
 
         private int ParseEstimatedPrintTime(string gcode)
         {
@@ -126,7 +168,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var minutes = timeParts.Where(x => x.Contains("m")).Select(x => int.Parse(x.Replace("m", ""))).FirstOrDefault();
                 var seconds = timeParts.Where(x => x.Contains("s")).Select(x => int.Parse(x.Replace("s", ""))).FirstOrDefault();
 
-                return (hours * 3600) + (minutes * 60) + seconds;
+                return hours * 3600 + minutes * 60 + seconds;
             }
 
             var silentMode = ParseSettingAsString(gcode, "; estimated printing time (silent mode)");
@@ -138,7 +180,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var minutes = timeParts.Where(x => x.Contains("m")).Select(x => int.Parse(x.Replace("m", ""))).FirstOrDefault();
                 var seconds = timeParts.Where(x => x.Contains("s")).Select(x => int.Parse(x.Replace("s", ""))).FirstOrDefault();
 
-                return (hours * 3600) + (minutes * 60) + seconds;
+                return hours * 3600 + minutes * 60 + seconds;
             }
 
 
@@ -233,6 +275,11 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 return match.Groups[1].Value.Trim();
             }
             return string.Empty;
+        }
+
+        public static bool IsOrcaSlicer(string gcode)
+        {
+            return gcode.Contains("generated by OrcaSlicer");
         }
     }
 }

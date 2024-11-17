@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers
+﻿namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
 {
     /// <summary>
     /// Contains all the gcode tests
