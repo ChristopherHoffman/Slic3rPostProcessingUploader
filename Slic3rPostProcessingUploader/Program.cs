@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
-using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
 using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -97,6 +96,9 @@ try
 catch (Exception e)
 {
     Console.WriteLine(e.Message);
+    Console.WriteLine(
+        e.ToString()
+    ); 
 }
 
 void DisplayHelp(ArgumentParser arguments)
@@ -189,7 +191,9 @@ async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, stri
     }
     catch (Exception e)
     {
-        Console.WriteLine(e.Message);
+        Console.WriteLine(
+            e.ToString()
+        );
     }
 }
 
@@ -205,6 +209,11 @@ void LogApiResponse(string debugPath, string responseContent)
 
 string GetTitle(string filename)
 {
+    if (string.IsNullOrEmpty(filename))
+    {
+        return "";
+    }
+
     string snakeCaseFilename = ToSnakeCase(filename);
     string title = string.Join(" ", snakeCaseFilename.Split('_')
         .Where(segment => !segment.Equals("gcode", StringComparison.OrdinalIgnoreCase))
@@ -216,6 +225,12 @@ string GetTitle(string filename)
 
 string ToSnakeCase(string text)
 {
+
+    if (string.IsNullOrEmpty(text))
+    {
+        return "";
+    }
+
     if (text.Length < 2)
     {
         return text.ToLowerInvariant();

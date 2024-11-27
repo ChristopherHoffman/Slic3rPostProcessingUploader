@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 {
@@ -148,43 +147,47 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 
         private int ParseEstimatedPrintTime(string gcode)
         {
-            var printTimeStringMatch = Regex.Match(gcode, @"total estimated time: (.+)$", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-            if (printTimeStringMatch.Success)
-            {
-                var time = ParseAsSeconds(printTimeStringMatch.Groups[1].Value);
-                if (time.HasValue)
+            try { 
+                var printTimeStringMatch = Regex.Match(gcode, @"total estimated time: (.+)$", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                if (printTimeStringMatch.Success)
                 {
-                    return time.Value;
+                    var time = ParseAsSeconds(printTimeStringMatch.Groups[1].Value);
+                    if (time.HasValue)
+                    {
+                        return time.Value;
+                    }
                 }
+
+                var normalModePrintTimeMatch = ParseSettingAsString(gcode, "; estimated printing time (normal mode)");
+
+                if (!string.IsNullOrEmpty(normalModePrintTimeMatch))
+                {
+                    var time = ParseAsSeconds(normalModePrintTimeMatch);
+                    if (time.HasValue)
+                    {
+                        return time.Value;
+                    }
+                }
+
+                var silentMode = ParseSettingAsString(gcode, "; estimated printing time (silent mode)");
+                if (!string.IsNullOrEmpty(silentMode))
+                {
+                    // Parse a time formated as 1h 35m 50s into seconds.
+                    var time = ParseAsSeconds(silentMode);
+                    if (time.HasValue)
+                    {
+                        return time.Value;
+                    }
+                }
+
+
+                return 0;
             }
-
-            var normalModePrintTimeMatch = ParseSettingAsString(gcode, "; estimated printing time (normal mode)");
-
-            if (!string.IsNullOrEmpty(normalModePrintTimeMatch))
+            catch (Exception e)
             {
-                // Parse a time formated as 1h 35m 50s into seconds.
-                var timeParts = normalModePrintTimeMatch.Split(' ');
-                var hours = timeParts.Where(x => x.Contains("h")).Select(x => int.Parse(x.Replace("h", ""))).FirstOrDefault();
-                var minutes = timeParts.Where(x => x.Contains("m")).Select(x => int.Parse(x.Replace("m", ""))).FirstOrDefault();
-                var seconds = timeParts.Where(x => x.Contains("s")).Select(x => int.Parse(x.Replace("s", ""))).FirstOrDefault();
-
-                return hours * 3600 + minutes * 60 + seconds;
+                Console.WriteLine(e.Message);
+                return 0;
             }
-
-            var silentMode = ParseSettingAsString(gcode, "; estimated printing time (silent mode)");
-            if (!string.IsNullOrEmpty(silentMode))
-            {
-                // Parse a time formated as 1h 35m 50s into seconds.
-                var timeParts = silentMode.Split(' ');
-                var hours = timeParts.Where(x => x.Contains("h")).Select(x => int.Parse(x.Replace("h", ""))).FirstOrDefault();
-                var minutes = timeParts.Where(x => x.Contains("m")).Select(x => int.Parse(x.Replace("m", ""))).FirstOrDefault();
-                var seconds = timeParts.Where(x => x.Contains("s")).Select(x => int.Parse(x.Replace("s", ""))).FirstOrDefault();
-
-                return hours * 3600 + minutes * 60 + seconds;
-            }
-
-
-            return 0;
         }
 
         private int? ParseAsSeconds(string input)
@@ -193,9 +196,21 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
             {
                 return null;
             }
-            var durationAsMs = int.Parse(input); // Assuming the input is in milliseconds
-            var durationAsSeconds = durationAsMs / 1000;
-            return (int)Math.Floor((double)durationAsSeconds);
+
+            if (int.TryParse(input, out var durationAsMs))
+            {
+                var durationAsSeconds = durationAsMs / 1000;
+                return (int)Math.Floor((double)durationAsSeconds);
+            }
+
+            // Try and parse a time formated as 1h 35m 50s into seconds.
+            var timeParts = input.Split(' ');
+            var hours = timeParts.Where(x => x.Contains("h")).Select(x => int.Parse(x.Replace("h", ""))).FirstOrDefault();
+            var minutes = timeParts.Where(x => x.Contains("m")).Select(x => int.Parse(x.Replace("m", ""))).FirstOrDefault();
+            var seconds = timeParts.Where(x => x.Contains("s")).Select(x => int.Parse(x.Replace("s", ""))).FirstOrDefault();
+
+            return hours * 3600 + minutes * 60 + seconds;
+
         }
 
         public double? EstimateFilamentUsageInMg(string gcode)
