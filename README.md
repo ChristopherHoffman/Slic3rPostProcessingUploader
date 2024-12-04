@@ -1,8 +1,12 @@
+![3D Print Log logo](docs/assets/3d-print-log-logo_8b178eb1339b.svg)
+
 # Slic3r Post-Processing Uploader for 3D Print Log
 
 A Slic3r/PrusaSlicer/OrcaSlicer/Bambu Studio Post-Processing script for uploading print details to https://www.3dprintlog.com.
 
-This program will parse the gcode file and open up https://www.3dprintlog.com with the print details filled out.
+[3D Print Log](https://www.3dprintlog.com) is a simple tool for tracking 3D prints. Easily record details of your 3D printers, filament usage, print status, print duration and more. Keeps track the filament remaining on your spools, and we have Cura/Octoprint/Moonraker, and now Slic3r integrations.
+
+This Slic3r Uploader will parse your gcode file after export and open up https://www.3dprintlog.com with the print details automatically filled out.
 
 Create a free account at https://www.3dprintlog.com today and enjoy all the features.
 
@@ -13,7 +17,7 @@ This is a new project, currently a work in progress. Feel free to help out by su
 - OrcaSlicer
 - PrusaSlicer
 
-#### Up Next:
+#### Partial Support for: (templates with full settings up next)
 
 - Bambu Studio
 - Super Slicer
@@ -33,6 +37,10 @@ Windows:
 Mac/Linux:
 
 `~/uploader/Slic3rPostProcessingUploader [options]`
+
+#### Example of OrcaSlicer on Windows:
+
+![Screenshot of OrcaSlicer with the Other Tab visible. In the Post-Processing Scripts section, we see the example of the absolute path to a windows .exe](docs\assets\OrcaSlicerExample.png)
 
 ## Options:
 
