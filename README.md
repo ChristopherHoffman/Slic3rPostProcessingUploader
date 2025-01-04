@@ -16,10 +16,11 @@ This is a new project, currently a work in progress. Feel free to help out by su
 
 - OrcaSlicer
 - PrusaSlicer
+- Bambu Studio
+- FLSun Slicer (based on OrcaSlicer)
 
 #### Partial Support for: (templates with full settings up next)
 
-- Bambu Studio
 - Super Slicer
 
 ## Usage:
