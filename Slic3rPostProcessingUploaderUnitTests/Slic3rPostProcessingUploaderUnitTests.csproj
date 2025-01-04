@@ -25,4 +25,8 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Parsers\SuperSlicer\" />
+  </ItemGroup>
+
 </Project>
