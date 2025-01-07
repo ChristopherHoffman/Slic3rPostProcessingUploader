@@ -1,4 +1,5 @@
 ﻿using Microsoft.ApplicationInsights;
+using Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext;
 using Slic3rPostProcessingUploader.Services.Parsers.BambuStudio;
 using Slic3rPostProcessingUploader.Services.Parsers.FLSunSlicer;
 using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
@@ -29,6 +30,10 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             else if (BambuStudioParser.IsBambuStudio(gcode))
             {
                 return BuildBambuStudioParser(arguments);
+            }
+            else if (AnycubicSlicerNextParser.IsAnycubicSlicerNext(gcode))
+            { 
+                return BuildAnycubicSlicerNextParser(arguments);
             }
             else
             {
@@ -68,22 +73,34 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 
                 telemetryClient.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, string> { { "PercentMatch", bambuStudioPercentMatch.ToString() } });
 
+                // Try Anycubic Slicer Next
+                var anycubicSlicerNextFullTemplate = new AnycubicSlicerNextFullNoteTemplate().getNoteTemplate();
+                var anycubicSlicerNextParser = new AnycubicSlicerNextParser(anycubicSlicerNextFullTemplate);
+                var anycubicSlicerNextResults = anycubicSlicerNextParser.CountTemplateMatches(gcode);
+                var anycubicSlicerNextPercentMatch = anycubicSlicerNextResults.numMatches / anycubicSlicerNextResults.numPlaceholders;
+
+                telemetryClient.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, string> { { "PercentMatch", anycubicSlicerNextPercentMatch.ToString() } });
+
                 // Compare Results
-                if (orcaPercentMatch > PrusaPercentMatch && orcaPercentMatch > flsunPercentMatch && orcaPercentMatch > bambuStudioPercentMatch)
+                if (orcaPercentMatch > PrusaPercentMatch && orcaPercentMatch > flsunPercentMatch && orcaPercentMatch > bambuStudioPercentMatch && orcaPercentMatch > anycubicSlicerNextPercentMatch)
                 {
                     return BuildOrcaParser(arguments);
                 }
-                else if (PrusaPercentMatch > orcaPercentMatch && PrusaPercentMatch > flsunPercentMatch && PrusaPercentMatch > bambuStudioPercentMatch)
+                else if (PrusaPercentMatch > orcaPercentMatch && PrusaPercentMatch > flsunPercentMatch && PrusaPercentMatch > bambuStudioPercentMatch && PrusaPercentMatch > anycubicSlicerNextPercentMatch)
                 {
                     return BuildPrusaParser(arguments);
                 }
-                else if (flsunPercentMatch > orcaPercentMatch && flsunPercentMatch > PrusaPercentMatch && flsunPercentMatch > bambuStudioPercentMatch)
+                else if (flsunPercentMatch > orcaPercentMatch && flsunPercentMatch > PrusaPercentMatch && flsunPercentMatch > bambuStudioPercentMatch && flsunPercentMatch > anycubicSlicerNextPercentMatch)
                 {
                     return BuildFLSunParser(arguments);
                 }
-                else if (bambuStudioPercentMatch > orcaPercentMatch && bambuStudioPercentMatch > PrusaPercentMatch && bambuStudioPercentMatch > flsunPercentMatch)
+                else if (bambuStudioPercentMatch > orcaPercentMatch && bambuStudioPercentMatch > PrusaPercentMatch && bambuStudioPercentMatch > flsunPercentMatch && bambuStudioPercentMatch > anycubicSlicerNextPercentMatch)
                 {
                     return BuildBambuStudioParser(arguments);
+                }
+                else if (anycubicSlicerNextPercentMatch > orcaPercentMatch && anycubicSlicerNextPercentMatch > PrusaPercentMatch && anycubicSlicerNextPercentMatch > flsunPercentMatch && anycubicSlicerNextPercentMatch > bambuStudioPercentMatch)
+                {
+                    return BuildAnycubicSlicerNextParser(arguments);
                 }
                 else
                 {
@@ -134,6 +151,17 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                             : new NoteTemplateFromFile(arguments.NoteTemplatePath);
             return new BambuStudioParser(template.getNoteTemplate());
         }
+
+        private static IGcodeParser BuildAnycubicSlicerNextParser(ArgumentParser arguments)
+        {
+            INoteTemplate template = arguments.UseDefaultNoteTemplate
+                            ? new AnycubicSlicerNextDefaultNoteTemplate()
+                            : arguments.UseFullNoteTemplate
+                            ? new AnycubicSlicerNextFullNoteTemplate()
+                            : new NoteTemplateFromFile(arguments.NoteTemplatePath);
+            return new AnycubicSlicerNextParser(template.getNoteTemplate());
+        }
+
 
         private static void SendTemplateMetrics(ArgumentParser arguments, TelemetryClient telemetryClient)
         {
