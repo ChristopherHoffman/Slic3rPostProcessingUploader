@@ -1,18 +1,16 @@
 ﻿using Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext;
-using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
-using Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerNext;
 using Snapshooter.MSTest;
 
 
-namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
+namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerNext
 {
     [TestClass]
-    public class OrcaParserTests
+    public class AnycubicSlicerNextParserTests
     {
         [TestMethod]
         public void ShouldReturnAnEmptySettingWhenGcodeIsEmpty()
         {
-            var parser = new OrcaParser("");
+            var parser = new AnycubicSlicerNextParser("");
             var result = parser.ParseGcode("");
             Assert.IsNotNull(result);
 
@@ -22,8 +20,8 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
         [TestMethod]
         public void ShouldReturnExpectedValuesWhenGivenFullGcode()
         {
-            var parser = new OrcaParser("");
-            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCube);
+            var parser = new AnycubicSlicerNextParser("");
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.CalibrationCube);
 
             Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
@@ -33,8 +31,8 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
         {
             string template = "Settings:";
 
-            var parser = new OrcaParser(template);
-            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCube);
+            var parser = new AnycubicSlicerNextParser(template);
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.CalibrationCube);
 
             Assert.AreEqual("Settings:", result.settings.note);
         }
@@ -47,8 +45,8 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
                     Layer Height: {{layer_height}}
                 """;
 
-            var parser = new OrcaParser(template);
-            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCube);
+            var parser = new AnycubicSlicerNextParser(template);
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.CalibrationCube);
 
             Assert.AreEqual("""
                 Settings:
@@ -69,15 +67,15 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
                     Sparse Infill Density: {{sparse_infill_density}}
                 """;
 
-            var parser = new OrcaParser(template);
-            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCube);
+            var parser = new AnycubicSlicerNextParser(template);
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.CalibrationCube);
 
             Assert.AreEqual("""
                 Settings:
                     Layer Height: 0.2
                     First Layer Height: 0.200
-                    Wall Loops: 3
-                    Top Shell Layers: 4
+                    Wall Loops: 2
+                    Top Shell Layers: 5
                     Bottom Shell Layers: 3
                     Sparse Infill Density: 15%
                 """, result.settings.note);
@@ -86,8 +84,8 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
         [TestMethod]
         public void ShouldRenderFullTemplateWhenGivenAGcodeWithTwoFilaments()
         {
-            var parser = new OrcaParser("");
-            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCubeTwoFilament);
+            var parser = new AnycubicSlicerNextParser("");
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.TwoFilamentCalibrationCube);
 
             Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }

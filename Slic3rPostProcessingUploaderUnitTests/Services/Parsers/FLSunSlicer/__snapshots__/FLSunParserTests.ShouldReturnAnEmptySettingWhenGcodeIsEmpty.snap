@@ -1,5 +1,5 @@
 ﻿{
-  "Slicer": "OrcaSlicer",
+  "Slicer": "FLSunSlicer",
   "CuraVersion": "Unknown",
   "PluginVersion": null,
   "settings": {
@@ -8,8 +8,8 @@
     "time_stamp": null,
     "estimated_print_time_seconds": 0,
     "material_used_mg": 0,
-    "Snapshot": "dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=",
+    "Snapshot": null,
     "file_name": null,
-    "filamentUsage": []
+    "filamentUsage": null
   }
 }
