@@ -14,7 +14,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerN
             var result = parser.ParseGcode("");
             Assert.IsNotNull(result);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
         [TestMethod]
@@ -23,7 +23,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerN
             var parser = new AnycubicSlicerNextParser("");
             var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.CalibrationCube);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
         [TestMethod]
@@ -87,7 +87,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerN
             var parser = new AnycubicSlicerNextParser("");
             var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.TwoFilamentCalibrationCube);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
     }

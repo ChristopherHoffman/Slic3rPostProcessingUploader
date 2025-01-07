@@ -16,7 +16,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
             var result = parser.ParseGcode("");
             Assert.IsNotNull(result);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
         [TestMethod]
@@ -25,7 +25,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
             var parser = new OrcaParser("");
             var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCube);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
         [TestMethod]
@@ -89,7 +89,7 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
             var parser = new OrcaParser("");
             var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCubeTwoFilament);
 
-            Snapshot.Match(result);
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
     }
