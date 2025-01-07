@@ -1,4 +1,6 @@
-﻿using Slic3rPostProcessingUploader.Services.Parsers.BambuStudio;
+﻿using Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext;
+using Slic3rPostProcessingUploader.Services.Parsers.BambuStudio;
+using Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerNext;
 using Snapshooter.MSTest;
 
 
@@ -79,6 +81,15 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.BambuStudio
                     Bottom Shell Layers: 3
                     Sparse Infill Density: 10%
                 """, result.settings.note);
+        }
+
+        [TestMethod]
+        public void ShouldRenderFullTemplateWhenGivenAGcodeWithTwoFilaments()
+        {
+            var parser = new BambuStudioParser("");
+            var result = parser.ParseGcode(BambuStudioParserTestGcode.CalibrationCubeTwoFilament);
+
+            Snapshot.Match(result, matchOptions => matchOptions.HashField("settings.Snapshot"));
         }
 
     }
