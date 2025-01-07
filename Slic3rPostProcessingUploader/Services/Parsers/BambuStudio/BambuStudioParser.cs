@@ -140,7 +140,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.BambuStudio
             var snapshotMatch = Regex.Match(gcode, "thumbnail begin[\\sa-zA-Z\\d]*([\\S\\s]*?); thumbnail end", RegexOptions.IgnoreCase | RegexOptions.Multiline);
             if (snapshotMatch.Success)
             {
-                return snapshotMatch.Groups[1].Value.Replace("\n; ", "").Replace(";", "").Trim();
+                return snapshotMatch.Groups[1].Value.Replace("\r\n; ", "").Replace("\n; ", "").Replace(";", "").Trim();
             }
             return null;
         }
