@@ -17,7 +17,8 @@ This is a new project, currently a work in progress. Feel free to help out by su
 - OrcaSlicer
 - PrusaSlicer
 - Bambu Studio
-- FLSun Slicer (based on OrcaSlicer)
+- FLSun Slicer
+- Anycubic Slicer Next
 
 #### Partial Support for: (templates with full settings up next)
 
