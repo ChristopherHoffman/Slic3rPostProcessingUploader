@@ -1,4 +1,6 @@
-﻿using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
+﻿using Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext;
+using Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer;
+using Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerNext;
 using Snapshooter.MSTest;
 
 
@@ -79,6 +81,15 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.OrcaSlicer
                     Bottom Shell Layers: 3
                     Sparse Infill Density: 15%
                 """, result.settings.note);
+        }
+
+        [TestMethod]
+        public void ShouldRenderFullTemplateWhenGivenAGcodeWithTwoFilaments()
+        {
+            var parser = new OrcaParser("");
+            var result = parser.ParseGcode(OrcaParserTestGcode.CalibrationCubeTwoFilament);
+
+            Snapshot.Match(result);
         }
 
     }

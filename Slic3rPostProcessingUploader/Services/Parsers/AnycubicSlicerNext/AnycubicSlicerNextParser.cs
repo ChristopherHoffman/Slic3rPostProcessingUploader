@@ -260,6 +260,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext
 
             return filament;
         }
+
         public double? EstimateFilamentUsageInMg(string gcode)
         {
             if (string.IsNullOrEmpty(gcode))

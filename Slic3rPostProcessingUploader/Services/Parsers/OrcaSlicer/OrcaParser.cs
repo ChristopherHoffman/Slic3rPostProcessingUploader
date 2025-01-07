@@ -27,8 +27,14 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 
             settings.estimated_print_time_seconds = ParseEstimatedPrintTime(gcode);
 
-            // Convert double to int
-            settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
+            settings.filamentUsage = GetFilamentUsage(gcode);
+
+            if (settings.filamentUsage.Count == 0)
+            {
+
+                // Convert double to int
+                settings.material_used_mg = (int?)EstimateFilamentUsageInMg(gcode);
+            }
 
 
             settings.note = RenderNoteTemplate(gcode);
@@ -211,6 +217,48 @@ namespace Slic3rPostProcessingUploader.Services.Parsers.OrcaSlicer
 
             return hours * 3600 + minutes * 60 + seconds;
 
+        }
+
+        private List<PrintFilamentSummaryDto> GetFilamentUsage(string gcode)
+        {
+            List<PrintFilamentSummaryDto> filament = new List<PrintFilamentSummaryDto>();
+
+            string filamentUsed = ParseSettingAsString(gcode, "; filament used \\[mm\\]");
+
+            if (string.IsNullOrEmpty(filamentUsed))
+            {
+                return filament;
+            }
+
+            List<double> usage = filamentUsed.Split(',')
+                                             .Select(x => double.Parse(x.Trim()))
+                                             .ToList();
+
+            for (int i = 0; i < usage.Count; i++)
+            {
+                if (usage[i] == 0)
+                {
+                    continue;
+                }
+
+                PrintFilamentSummaryDto filamentUsage = new PrintFilamentSummaryDto
+                {
+                    EstimatedSource = PrintFilamentSourceMeasurement.Length,
+                    EstimatedLengthInM = Math.Round(usage[i] / 1000, 3),
+                    Id = null,
+                    Notes = string.Empty,
+                    Source = PrintFilamentSourceMeasurement.Length,
+                    Filament = new FilamentSummary
+                    {
+                        DisplayName = "Other",
+                        Id = "00000000-0000-0000-0000-000000000000"
+                    }
+                };
+
+                filament.Add(filamentUsage);
+            }
+
+            return filament;
         }
 
         public double? EstimateFilamentUsageInMg(string gcode)
