@@ -81,5 +81,14 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services.Parsers.AnycubicSlicerN
                 """, result.settings.note);
         }
 
+        [TestMethod]
+        public void ShouldRenderFullTemplateWhenGivenAGcodeWithTwoFilaments()
+        {
+            var parser = new AnycubicSlicerNextParser("");
+            var result = parser.ParseGcode(AnycubicSlicerNextParserTestGcode.TwoFilamentCalibrationCube);
+
+            Snapshot.Match(result);
+        }
+
     }
 }

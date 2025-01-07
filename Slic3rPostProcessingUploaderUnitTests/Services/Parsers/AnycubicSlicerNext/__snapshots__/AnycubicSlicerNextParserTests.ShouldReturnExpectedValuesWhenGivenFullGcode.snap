@@ -7,8 +7,26 @@
     "print_name": null,
     "time_stamp": null,
     "estimated_print_time_seconds": 1121,
-    "material_used_mg": 3530,
+    "material_used_mg": null,
     "Snapshot": "iVBORw0KGgoAAAANSUhEUgAAAOYAAABuCAYAAAAziW8OAAAEUklEQVR4Ae3bPYtcVRjA8fsB7GwsFB\nSCIFoYU0gUJawivq1vEI2CEkGIjaCIJNpkC0VEGxGxXC1tRLATYSstFazsFmzzISbcJBcmy87szD3n\n3vOce38/eCCk3j/P4ZmZpgEAmJW77n/8XAPE8PALn+y9+8O1RTvtvxugrPOf/33YRdlN+3+2JxSwvC\nVXje0JI9okym6e++jXgwYYTvs8Pe7petJ42sJAttmSq+aJd77bb4A8+mxJ2xMGkmNLOgxBRu3RZqgo\nlw9Dd9x5z70NsN6QW9LTFnoYO8qj27MBbpfzwGN7QqKSW3LVOAwxaxG25Lrt6TDErETckrYns1ZTlN\n04DDFZfb/nGmUchpicGrfkqvG0ZRJq3pK2J5MzpS1pezIJ7c+ragosZRyGCO/U2QsXa4oq13jaEtYc\nnq4njR9iE8oUDzx9x/akOFty9TgMUcQYP2SufXzfltHYktuP7cmgRNl/fKzCIBx40sdhiGxsyfzjaU\nuS0y9e3q/pD76mOfPyZz7zpJ8Hzr23/8wHPy/e/Pq/qv7oI88bX/67ePLi94tTj74uTPppw9y59OOi\nnZc+/aOqACLO7uXfF2cvfHVjhElvy2G2Y3v2n3ZLdlEKkyRHw+zm1at/VhVFyVneksIki1VhtvP8x7\n8t3v72/6oiGXueev+nY6MUJknWhdnN+S/+qSqWMWbVlhQmWWwSZrc9awqndJTCJMmmYToM3ZyjBx5h\nMohtwpzzYWjTLSlMsugTZrc953IY2mZLCpMs+oY5h+3ZZ0sKkyxSw5zqYSg1SmGSJEeYUzoMdd9zTY\n1SmCTJFeYUnrY5tqQwySJ3mLVuz1xbUphkMUSYNW3P3FtSmGQxZJjRD0PrvucqTIoaOsyIT9sht6Qw\nyWKMMLuJ8EPssaIUJknGDLP09hziwCNMBjF2mDsFDkNjbklhkkWpMLvtOfT3bcfeksIki5JhDrk9S2\n1JYZJFhDDbyfmxSoQohUmSKGF2T9uUw1DO77kKk6IihZnytI2yJYVJFhHD3HZ7RtqSwiSLqGFusj0j\nbklhkkX0MNs57jD07Ie/hI5SmCSpIczlp+1rV/8K+3QVJtnUEmY3NQQpTJIJU5gEJExhEpAwhUlAwh\nQmAQlTmAQkTGESkDCFSUDCFCYBCVOYBCRMYRKQMIVJQMIUJkHdd+aVPWHmnbsfenqvgRyEmT6P7F45\nbCC307tXDoTp6UpQwrQlCSri9hQlNPEOQ5GCdOChuMfe+uZQmLYkAUXYnqWjtCUJa45h2pJUodRhSJ\nSwgSmHKUiqNub2FCVsYazD0BhROvAwOTWHaUsyaUM+bYeK8sGdSwcNzEENYdqSzFLu7SlKyCTnYShX\nkA48cEuO79vakjCA1KdtSpS2JJxgzDBtSdhCn+0pShjJEGEKEjLY9DAkShjZJh+rOPBAIX3CtCVhBK\nsOQ8dF6XuuMLJ1YdqSUNDy9hQlBNIdhhx4AACAwq4DoSCmY8yKpQgAAAAASUVORK5CYII=",
-    "file_name": null
+    "file_name": null,
+    "filamentUsage": [
+      {
+        "Id": null,
+        "Filament": {
+          "Id": "00000000-0000-0000-0000-000000000000",
+          "DisplayName": "Other"
+        },
+        "AmountMg": null,
+        "LengthInM": null,
+        "VolumeMl": null,
+        "EstimatedAmountMg": null,
+        "EstimatedLengthInM": 1.184,
+        "EstimatedVolumeMl": null,
+        "Source": "Length",
+        "EstimatedSource": "Length",
+        "Notes": ""
+      }
+    ]
   }
 }

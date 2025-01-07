@@ -40,6 +40,8 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         public string? Snapshot { get; set; }
         public string? file_name { get; set; }
 
+        public List<PrintFilamentSummaryDto>? filamentUsage { get; set; }
+
 
     }
 

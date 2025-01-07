@@ -9,6 +9,7 @@
     "estimated_print_time_seconds": 53389,
     "material_used_mg": 275720,
     "Snapshot": null,
-    "file_name": null
+    "file_name": null,
+    "filamentUsage": null
   }
 }

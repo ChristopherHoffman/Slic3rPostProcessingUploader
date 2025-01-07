@@ -9,6 +9,7 @@
     "estimated_print_time_seconds": 0,
     "material_used_mg": 0,
     "Snapshot": null,
-    "file_name": null
+    "file_name": null,
+    "filamentUsage": []
   }
 }
