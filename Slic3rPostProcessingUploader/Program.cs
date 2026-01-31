@@ -11,6 +11,7 @@ using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 
 [assembly: InternalsVisibleTo("Slic3rPostProcessingUploaderUnitTests")]
 
@@ -50,6 +51,12 @@ try
     if (arguments.DisplayHelp)
     {
         DisplayHelp(arguments);
+        return;
+    }
+
+    if (arguments.DisplayVersion)
+    {
+        Console.WriteLine($"Slic3rPostProcessingUploader v{new VersionService().GetVersion()}");
         return;
     }
 
@@ -191,8 +198,12 @@ async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, stri
 
         LogApiResponse(debugPath, responseContent);
 
-        string guid = responseContent.Replace("{", "").Replace("}", "").Split(":")[1].Replace("\"", "");
-        new Browser().Open($"{newPrintUrl}?cura_version={dto.CuraVersion}&plugin_version={dto.PluginVersion}&settingId={guid}");
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse>(responseContent);
+        if (apiResponse == null || string.IsNullOrEmpty(apiResponse.NewSettingId))
+        {
+            throw new Exception($"Invalid API response: missing newSettingId");
+        }
+        new Browser().Open($"{newPrintUrl}?cura_version={dto.CuraVersion}&plugin_version={dto.PluginVersion}&settingId={apiResponse.NewSettingId}");
     }
     catch (Exception e)
     {

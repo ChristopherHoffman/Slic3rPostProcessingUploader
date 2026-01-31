@@ -1,5 +1,3 @@
-﻿using System.Security.Policy;
-
 namespace Slic3rPostProcessingUploader.Services
 {
     /// <summary>
@@ -7,24 +5,25 @@ namespace Slic3rPostProcessingUploader.Services
     /// </summary>
     internal class ArgumentParser
     {
-        public string InputFile { get; private set; }
+        public string? InputFile { get; private set; }
         public bool UseDefaultNoteTemplate { get; private set; }
         public bool UseFullNoteTemplate { get; private set; }
 
-        public string NoteTemplatePath { get; private set; }
+        public string? NoteTemplatePath { get; private set; }
 
         public bool UseLocalDev { get; private set; }
 
-        public string DebugPath { get; private set; }
+        public string? DebugPath { get; private set; }
 
         public bool DisableTelemetry { get; private set; }
 
         public bool DisplayHelp { get; private set; }
 
+        public bool DisplayVersion { get; private set; }
+
         public ArgumentParser(string[] args) {
             this.UseDefaultNoteTemplate = true;
             this.UseFullNoteTemplate = false;
-            this.NoteTemplatePath = null;
             this.DisableTelemetry = false;
             this.DisplayHelp = false;
 
@@ -107,6 +106,11 @@ namespace Slic3rPostProcessingUploader.Services
                 {
                     this.DisplayHelp = true;
                 }
+
+                if (args[i] == "--version" || args[i] == "-v")
+                {
+                    this.DisplayVersion = true;
+                }
             }
         }
 
@@ -122,6 +126,7 @@ namespace Slic3rPostProcessingUploader.Services
             Console.WriteLine();
             Console.WriteLine("Options:");
             Console.WriteLine("--help, -h: Display this help message. No settings will be uploaded if help is displayed.");
+            Console.WriteLine("--version, -v: Display the version number.");
             Console.WriteLine("--local-dev: Use the local development environment");
             Console.WriteLine("--debug <path>: Save debug information to the specified path");
             Console.WriteLine("--opt-out-telemetry: Disable telemetry tracking. To help improve the plugin, we track slicer and plugin versions, as well as log errors that are thrown. No personal data is collected.");
