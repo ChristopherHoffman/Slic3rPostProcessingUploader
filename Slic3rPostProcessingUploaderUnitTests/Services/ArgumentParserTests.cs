@@ -160,6 +160,20 @@ namespace Slic3rPostProcessingUploaderUnitTests.Services
         }
 
         [TestMethod]
+        public void Constructor_WithVersionFlag_SetsDisplayVersion()
+        {
+            var parser = new ArgumentParser(["--version"]);
+            Assert.IsTrue(parser.DisplayVersion);
+        }
+
+        [TestMethod]
+        public void Constructor_WithShortVersionFlag_SetsDisplayVersion()
+        {
+            var parser = new ArgumentParser(["-v"]);
+            Assert.IsTrue(parser.DisplayVersion);
+        }
+
+        [TestMethod]
         public void Constructor_WithMultipleFlags_SetsAllFlags()
         {
             var parser = new ArgumentParser(["--full", "--local-dev", "--opt-out-telemetry", "input.gcode"]);

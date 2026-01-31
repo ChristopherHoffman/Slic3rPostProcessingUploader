@@ -54,6 +54,12 @@ try
         return;
     }
 
+    if (arguments.DisplayVersion)
+    {
+        Console.WriteLine($"Slic3rPostProcessingUploader v{new VersionService().GetVersion()}");
+        return;
+    }
+
     SetupDebugging(arguments.DebugPath);
 
     Console.WriteLine("Starting the 3D Print Log Uploader");

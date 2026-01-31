@@ -7,6 +7,7 @@ Slic3rPostProcessingUploader.exe [options]
 
 Options:
 --help, -h: Display this help message. No settings will be uploaded if help is displayed.
+--version, -v: Display the version number.
 --local-dev: Use the local development environment
 --debug <path>: Save debug information to the specified path
 --opt-out-telemetry: Disable telemetry tracking. To help improve the plugin, we track slicer and plugin versions, as well as log errors that are thrown. No personal data is collected.
