@@ -45,7 +45,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var orcaFullTemplate = new OrcaFullNoteTemplate().getNoteTemplate();
                 var orcaParser = new OrcaParser(orcaFullTemplate);
                 var orcaResults = orcaParser.CountTemplateMatches(gcode);
-                var orcaPercentMatch = orcaResults.numMatches / orcaResults.numPlaceholders;
+                var orcaPercentMatch = (double) orcaResults.numMatches / (double) orcaResults.numPlaceholders;
 
                 telemetryClient.TrackEvent("OrcaPercentMatch", new Dictionary<string, string> { { "PercentMatch", orcaPercentMatch.ToString() } });
 
@@ -53,7 +53,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var prusaFullTemplate = new PrusaFullNoteTemplate().getNoteTemplate();
                 var prusaParser = new PrusaParser(prusaFullTemplate);
                 var prusaResults = prusaParser.CountTemplateMatches(gcode);
-                var PrusaPercentMatch = orcaResults.numMatches / orcaResults.numPlaceholders;
+                var PrusaPercentMatch = (double) prusaResults.numMatches / (double) prusaResults.numPlaceholders;
 
                 telemetryClient.TrackEvent("PrusaPercentMatch", new Dictionary<string, string> { { "PercentMatch", PrusaPercentMatch.ToString() } });
 
@@ -61,7 +61,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var flsunFullTemplate = new FLSunFullNoteTemplate().getNoteTemplate();
                 var flsunParser = new FLSunParser(flsunFullTemplate);
                 var flsunResults = flsunParser.CountTemplateMatches(gcode);
-                var flsunPercentMatch = flsunResults.numMatches / flsunResults.numPlaceholders;
+                var flsunPercentMatch = (double) flsunResults.numMatches / (double) flsunResults.numPlaceholders;
 
                 telemetryClient.TrackEvent("FLSunPercentMatch", new Dictionary<string, string> { { "PercentMatch", flsunPercentMatch.ToString() } });
 
@@ -69,7 +69,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var bambuStudioFullTemplate = new BambuStudioFullNoteTemplate().getNoteTemplate();
                 var bambuStudioParser = new BambuStudioParser(bambuStudioFullTemplate);
                 var bambuStudioResults = bambuStudioParser.CountTemplateMatches(gcode);
-                var bambuStudioPercentMatch = bambuStudioResults.numMatches / bambuStudioResults.numPlaceholders;
+                var bambuStudioPercentMatch = (double)bambuStudioResults.numMatches / (double) bambuStudioResults.numPlaceholders;
 
                 telemetryClient.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, string> { { "PercentMatch", bambuStudioPercentMatch.ToString() } });
 
@@ -77,7 +77,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var anycubicSlicerNextFullTemplate = new AnycubicSlicerNextFullNoteTemplate().getNoteTemplate();
                 var anycubicSlicerNextParser = new AnycubicSlicerNextParser(anycubicSlicerNextFullTemplate);
                 var anycubicSlicerNextResults = anycubicSlicerNextParser.CountTemplateMatches(gcode);
-                var anycubicSlicerNextPercentMatch = anycubicSlicerNextResults.numMatches / anycubicSlicerNextResults.numPlaceholders;
+                var anycubicSlicerNextPercentMatch = (double) anycubicSlicerNextResults.numMatches / (double) anycubicSlicerNextResults.numPlaceholders;
 
                 telemetryClient.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, string> { { "PercentMatch", anycubicSlicerNextPercentMatch.ToString() } });
 

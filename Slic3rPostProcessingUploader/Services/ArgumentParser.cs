@@ -27,7 +27,10 @@ namespace Slic3rPostProcessingUploader.Services
             this.NoteTemplatePath = null;
             this.DisableTelemetry = false;
             this.DisplayHelp = false;
-            this.InputFile = args.LastOrDefault();
+
+            // InputFile is the last argument, but only if it's not a flag
+            var lastArg = args.LastOrDefault();
+            this.InputFile = lastArg != null && !lastArg.StartsWith("--") && lastArg != "-h" ? lastArg : null;
 
             // Check for if the user wants a default, full, or custom note template
             for (int i = 0; i < args.Length; i++)
@@ -46,6 +49,12 @@ namespace Slic3rPostProcessingUploader.Services
                 {
                     this.UseDefaultNoteTemplate = false;
                     this.UseFullNoteTemplate = false;
+
+                    if (i + 1 >= args.Length)
+                    {
+                        throw new ArgumentException("--template requires a path argument");
+                    }
+
                     this.NoteTemplatePath = args[i + 1];
 
                     if (string.IsNullOrEmpty(this.NoteTemplatePath))
@@ -66,11 +75,16 @@ namespace Slic3rPostProcessingUploader.Services
 
                 if (args[i] == "--debug")
                 {
+                    if (i + 1 >= args.Length)
+                    {
+                        throw new ArgumentException("--debug requires a path argument");
+                    }
+
                     this.DebugPath = args[i + 1];
 
                     if (this.DebugPath == this.InputFile)
                     {
-                        throw new ArgumentException("Note template path cannot be null or empty");
+                        throw new ArgumentException("Debug path cannot be the same as input file");
                     }
 
                     if (string.IsNullOrEmpty(this.DebugPath))

@@ -59,6 +59,11 @@ try
 
     LogEnvironmentVariables(arguments.DebugPath);
 
+    if (string.IsNullOrEmpty(arguments.InputFile))
+    {
+        throw new ArgumentException("No input file specified. Please provide a G-code file path as the last argument.");
+    }
+
     string fileContents = File.ReadAllText(arguments.InputFile);
     LogFileContents(arguments.DebugPath, fileContents);
 
@@ -71,8 +76,9 @@ try
 
         dto = parser.ParseGcode(fileContents);
 
-        dto.settings.file_name = Path.GetFileName(Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME"));
-        dto.settings.print_name = GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
+        var outputName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
+        dto.settings.file_name = outputName != null ? Path.GetFileName(outputName) : Path.GetFileName(arguments.InputFile);
+        dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
         dto.PluginVersion = new VersionService().GetVersion();
 
         // Track the slicer, plugin version, and cura version as events
@@ -90,8 +96,7 @@ try
     }
 
     // Give application insights time to flush before closing
-    telemetryClient.Flush();
-    Task.Delay(2000).Wait();
+    await telemetryClient.FlushAsync(CancellationToken.None);
 }
 catch (Exception e)
 {
@@ -168,8 +173,8 @@ void LogDto(string debugPath, CuraSettingDto dto)
 
 async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, string newPrintUrl)
 {
-    HttpClient client = new();
-    StringContent content = new(dto.ToJSON(), Encoding.UTF8, "application/json");
+    using HttpClient client = new();
+    using StringContent content = new(dto.ToJSON(), Encoding.UTF8, "application/json");
 
     try
     {
@@ -205,50 +210,4 @@ void LogApiResponse(string debugPath, string responseContent)
         string path = Path.Combine(debugPath, responseFileName);
         File.WriteAllText(path, responseContent);
     }
-}
-
-string GetTitle(string filename)
-{
-    if (string.IsNullOrEmpty(filename))
-    {
-        return "";
-    }
-
-    string snakeCaseFilename = ToSnakeCase(filename);
-    string title = string.Join(" ", snakeCaseFilename.Split('_')
-        .Where(segment => !segment.Equals("gcode", StringComparison.OrdinalIgnoreCase))
-        .Select(CultureInfo.CurrentCulture.TextInfo.ToTitleCase))
-        .Trim();
-
-    return title.Length > 100 ? title[..100] : title;
-}
-
-string ToSnakeCase(string text)
-{
-
-    if (string.IsNullOrEmpty(text))
-    {
-        return "";
-    }
-
-    if (text.Length < 2)
-    {
-        return text.ToLowerInvariant();
-    }
-    StringBuilder sb = new();
-    _ = sb.Append(char.ToLowerInvariant(text[0]));
-    for (int i = 1; i < text.Length; ++i)
-    {
-        char c = text[i];
-        if (char.IsUpper(c))
-        {
-            _ = sb.Append('_');
-            _ = sb.Append(char.ToLowerInvariant(c));
-        }
-        else
-        {
-            _ = sb.Append(c);
-        }
-    }
-    return sb.ToString();
 }
