@@ -16,9 +16,10 @@ namespace Slic3rPostProcessingUploader.Services
             {
                 Process.Start(url);
             }
-            catch
+            catch (Exception ex)
             {
                 // hack because of this: https://github.com/dotnet/corefx/issues/10361
+                Console.WriteLine($"Process.Start failed, trying platform-specific fallback: {ex.Message}");
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     url = url.Replace("&", "^&");
