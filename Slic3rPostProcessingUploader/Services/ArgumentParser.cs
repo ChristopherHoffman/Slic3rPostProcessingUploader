@@ -1,5 +1,3 @@
-﻿using System.Security.Policy;
-
 namespace Slic3rPostProcessingUploader.Services
 {
     /// <summary>
@@ -7,15 +5,15 @@ namespace Slic3rPostProcessingUploader.Services
     /// </summary>
     internal class ArgumentParser
     {
-        public string InputFile { get; private set; }
+        public string? InputFile { get; private set; }
         public bool UseDefaultNoteTemplate { get; private set; }
         public bool UseFullNoteTemplate { get; private set; }
 
-        public string NoteTemplatePath { get; private set; }
+        public string? NoteTemplatePath { get; private set; }
 
         public bool UseLocalDev { get; private set; }
 
-        public string DebugPath { get; private set; }
+        public string? DebugPath { get; private set; }
 
         public bool DisableTelemetry { get; private set; }
 
@@ -24,7 +22,6 @@ namespace Slic3rPostProcessingUploader.Services
         public ArgumentParser(string[] args) {
             this.UseDefaultNoteTemplate = true;
             this.UseFullNoteTemplate = false;
-            this.NoteTemplatePath = null;
             this.DisableTelemetry = false;
             this.DisplayHelp = false;
 
