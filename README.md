@@ -48,6 +48,8 @@ Mac/Linux:
 
 `--help`, `-h`: Display this help message. No settings will be uploaded if help is displayed.
 
+`--version`, `-v`: Display the version number and exit.
+
 `--local-dev`: Use the local development environment
 
 `--debug <path>`: Save debug information to the specified path
