@@ -17,20 +17,20 @@ jobs:
           - {
               name: Linux,
               os: ubuntu-latest,
-              filepath: "/home/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net8.0/linux-x64/publish/",
+              filepath: "/home/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net10.0/linux-x64/publish/",
             }
           - {
               name: Windows VS2022,
               os: windows-latest,
-              filepath: "D:\\a\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\bin\\Release\\net8.0\\win-x64\\publish\\",
+              filepath: "D:\\a\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\Slic3rPostProcessingUploader\\bin\\Release\\net10.0\\win-x64\\publish\\",
             }
           - {
               name: MacOS,
               os: macos-latest,
-              filepath: "/Users/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net8.0/osx-arm64/publish/",
+              filepath: "/Users/runner/work/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/Slic3rPostProcessingUploader/bin/Release/net10.0/osx-arm64/publish/",
             }
         dotnet:
-          - { name: .NET 8, version: "8.0.x", filepath: "net8.0" }
+          - { name: .NET 10, version: "10.0.x", filepath: "net10.0" }
 
     steps:
       - name: Checkout Repository
