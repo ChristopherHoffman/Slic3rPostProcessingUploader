@@ -46,7 +46,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var orcaResults = orcaParser.CountTemplateMatches(gcode);
                 var orcaPercentMatch = (double) orcaResults.numMatches / (double) orcaResults.numPlaceholders;
 
-                telemetry.TrackEvent("OrcaPercentMatch", new Dictionary<string, string> { { "PercentMatch", orcaPercentMatch.ToString() } });
+                telemetry.TrackEvent("OrcaPercentMatch", new Dictionary<string, object> { { "PercentMatch", orcaPercentMatch } });
 
                 // Try Prusa
                 var prusaFullTemplate = new PrusaFullNoteTemplate().getNoteTemplate();
@@ -54,7 +54,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var prusaResults = prusaParser.CountTemplateMatches(gcode);
                 var PrusaPercentMatch = (double) prusaResults.numMatches / (double) prusaResults.numPlaceholders;
 
-                telemetry.TrackEvent("PrusaPercentMatch", new Dictionary<string, string> { { "PercentMatch", PrusaPercentMatch.ToString() } });
+                telemetry.TrackEvent("PrusaPercentMatch", new Dictionary<string, object> { { "PercentMatch", PrusaPercentMatch } });
 
                 // Try FL Sun
                 var flsunFullTemplate = new FLSunFullNoteTemplate().getNoteTemplate();
@@ -62,7 +62,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var flsunResults = flsunParser.CountTemplateMatches(gcode);
                 var flsunPercentMatch = (double) flsunResults.numMatches / (double) flsunResults.numPlaceholders;
 
-                telemetry.TrackEvent("FLSunPercentMatch", new Dictionary<string, string> { { "PercentMatch", flsunPercentMatch.ToString() } });
+                telemetry.TrackEvent("FLSunPercentMatch", new Dictionary<string, object> { { "PercentMatch", flsunPercentMatch } });
 
                 // Try Bambu Studio
                 var bambuStudioFullTemplate = new BambuStudioFullNoteTemplate().getNoteTemplate();
@@ -70,7 +70,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var bambuStudioResults = bambuStudioParser.CountTemplateMatches(gcode);
                 var bambuStudioPercentMatch = (double)bambuStudioResults.numMatches / (double) bambuStudioResults.numPlaceholders;
 
-                telemetry.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, string> { { "PercentMatch", bambuStudioPercentMatch.ToString() } });
+                telemetry.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, object> { { "PercentMatch", bambuStudioPercentMatch } });
 
                 // Try Anycubic Slicer Next
                 var anycubicSlicerNextFullTemplate = new AnycubicSlicerNextFullNoteTemplate().getNoteTemplate();
@@ -78,7 +78,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var anycubicSlicerNextResults = anycubicSlicerNextParser.CountTemplateMatches(gcode);
                 var anycubicSlicerNextPercentMatch = (double) anycubicSlicerNextResults.numMatches / (double) anycubicSlicerNextResults.numPlaceholders;
 
-                telemetry.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, string> { { "PercentMatch", anycubicSlicerNextPercentMatch.ToString() } });
+                telemetry.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, object> { { "PercentMatch", anycubicSlicerNextPercentMatch } });
 
                 // Compare Results
                 if (orcaPercentMatch > PrusaPercentMatch && orcaPercentMatch > flsunPercentMatch && orcaPercentMatch > bambuStudioPercentMatch && orcaPercentMatch > anycubicSlicerNextPercentMatch)
@@ -167,15 +167,15 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
             // Track the template used as an event
             if (arguments.UseDefaultNoteTemplate)
             {
-                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, object> { { "Template", "Default" } });
             }
             else if (arguments.UseFullNoteTemplate)
             {
-                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, object> { { "Template", "Full" } });
             }
             else
             {
-                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, object> { { "Template", "Custom" } });
             }
         }
     }

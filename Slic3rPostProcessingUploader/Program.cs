@@ -42,34 +42,24 @@ try
     string fileContents = File.ReadAllText(arguments.InputFile);
     LogFileContents(arguments.DebugPath, fileContents);
 
-    CuraSettingDto dto;
+    IGcodeParser parser = ParserFactory.GetParser(arguments, telemetry, fileContents);
 
-    using (telemetry.StartOperation("parsing"))
-    {
-        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetry, fileContents);
+    CuraSettingDto dto = parser.ParseGcode(fileContents);
 
-        dto = parser.ParseGcode(fileContents);
+    var outputName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
+    dto.settings.file_name = outputName != null ? Path.GetFileName(outputName) : Path.GetFileName(arguments.InputFile);
+    dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
+    dto.PluginVersion = new VersionService().GetVersion();
 
-        var outputName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
-        dto.settings.file_name = outputName != null ? Path.GetFileName(outputName) : Path.GetFileName(arguments.InputFile);
-        dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
-        dto.PluginVersion = new VersionService().GetVersion();
+    telemetry.TrackEvent("Parse", new Dictionary<string, object> {
+        { "Slicer", dto.Slicer },
+        { "PluginVersion", dto.PluginVersion },
+        { "CuraVersion", dto.CuraVersion }
+    });
 
-        telemetry.TrackEvent("Parse", new Dictionary<string, string> {
-            { "Slicer", dto.Slicer },
-            { "PluginVersion", dto.PluginVersion },
-            { "CuraVersion", dto.CuraVersion }
-        });
+    LogDto(arguments.DebugPath, dto);
 
-        LogDto(arguments.DebugPath, dto);
-    }
-
-    using (telemetry.StartOperation("uploading"))
-    {
-        await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
-    }
-
-    telemetry.Flush();
+    await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
 }
 catch (Exception e)
 {
@@ -98,8 +88,9 @@ void SetupDebugging(string debugPath)
         string debugFileName = "slic3r-debug.txt";
         string path = Path.Combine(debugPath, debugFileName);
 
-        StreamWriter sw = new(path, true) { AutoFlush = true };
-        Console.SetOut(sw);
+        var fileWriter = new StreamWriter(path, true) { AutoFlush = true };
+        var dualWriter = new DualWriter(Console.Out, fileWriter);
+        Console.SetOut(dualWriter);
 
         Console.WriteLine($"Debugging enabled, logging to {debugPath}");
     }

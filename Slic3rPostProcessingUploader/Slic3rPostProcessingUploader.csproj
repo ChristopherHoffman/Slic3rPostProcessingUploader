@@ -6,15 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <InvariantGlobalization>true</InvariantGlobalization>
-	<Version>1.1.1</Version>
+	<Version>1.1.2</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <PublishAot>true</PublishAot>
 	<RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
+	<FileVersion>1.1.2</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0" />
     <PackageReference Include="OpenTelemetry" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
   </ItemGroup>
 
 </Project>
