@@ -42,7 +42,7 @@ Mac/Linux:
 
 #### Example of OrcaSlicer on Windows:
 
-![Screenshot of OrcaSlicer with the Other Tab visible. In the Post-Processing Scripts section, we see the example of the absolute path to a windows .exe](docs\assets\OrcaSlicerExample.png)
+![Screenshot of OrcaSlicer with the Other Tab visible. In the Post-Processing Scripts section, we see the example of the absolute path to a windows .exe](docs/assets/OrcaSlicerExample.png)
 
 ## Options:
 
