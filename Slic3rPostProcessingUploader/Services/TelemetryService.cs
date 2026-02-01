@@ -64,6 +64,26 @@ internal sealed class TelemetryService : IDisposable
         }
     }
 
+    public void TrackException(Exception exception, string? context = null)
+    {
+        if (!_isEnabled || _logger == null) return;
+
+        var state = new List<KeyValuePair<string, object?>>
+        {
+            new("EventName", "Exception"),
+            new("ExceptionType", exception.GetType().Name),
+            new("ExceptionMessage", exception.Message),
+            new("StackTrace", exception.StackTrace ?? "")
+        };
+
+        if (!string.IsNullOrEmpty(context))
+        {
+            state.Add(new("Context", context));
+        }
+
+        _logger.Log(LogLevel.Error, 0, state, exception, (s, ex) => $"Exception: {ex?.Message}");
+    }
+
     public void Flush(int timeoutMilliseconds = 10000)
     {
         _tracerProvider?.ForceFlush(timeoutMilliseconds);
