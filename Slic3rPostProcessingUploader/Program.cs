@@ -1,14 +1,6 @@
-﻿using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.WorkerService;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
 using System.Collections;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -17,36 +9,12 @@ using System.Text.Json;
 
 try
 {
-
-    IServiceCollection services = new ServiceCollection();
-
-    services.AddLogging(loggingBuilder =>
-        {
-                loggingBuilder.AddFilter<ApplicationInsightsLoggerProvider>("Category", LogLevel.Information);
-        });
-
-    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=44698ebf-3363-4d89-b83d-5a0a616b22f5;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=ff0f0688-8e7b-4a59-b446-2969a28faae2");
-
-
-    IServiceProvider serviceProvider = services.BuildServiceProvider();
-
-    // Obtain logger instance from DI.
-    ILogger<Program> logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-
-    // Obtain TelemetryClient instance from DI, for additional manual tracking or to flush.
-    var telemetryClient = serviceProvider.GetRequiredService<TelemetryClient>();
-
-
     ArgumentParser arguments = new(args);
 
     string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
     string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
 
-    if (arguments.DisableTelemetry)
-    {
-        var telemetryConfig = serviceProvider.GetRequiredService<TelemetryConfiguration>();
-        telemetryConfig.DisableTelemetry = true;
-    }
+    using var telemetry = new TelemetryService(arguments.DisableTelemetry);
 
     if (arguments.DisplayHelp)
     {
@@ -76,10 +44,9 @@ try
 
     CuraSettingDto dto;
 
-    using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
+    using (telemetry.StartOperation("parsing"))
     {
-
-        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetryClient, fileContents);
+        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetry, fileContents);
 
         dto = parser.ParseGcode(fileContents);
 
@@ -88,36 +55,32 @@ try
         dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
         dto.PluginVersion = new VersionService().GetVersion();
 
-        // Track the slicer, plugin version, and cura version as events
-        telemetryClient.TrackEvent("Parse", new Dictionary<string, string> { { "Slicer", dto.Slicer },
+        telemetry.TrackEvent("Parse", new Dictionary<string, string> {
+            { "Slicer", dto.Slicer },
             { "PluginVersion", dto.PluginVersion },
-        { "CuraVersion", dto.CuraVersion } });
+            { "CuraVersion", dto.CuraVersion }
+        });
 
         LogDto(arguments.DebugPath, dto);
-
     }
 
-    using (telemetryClient.StartOperation<RequestTelemetry>("uploading"))
+    using (telemetry.StartOperation("uploading"))
     {
         await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
     }
 
-    // Give application insights time to flush before closing
-    await telemetryClient.FlushAsync(CancellationToken.None);
+    telemetry.Flush();
 }
 catch (Exception e)
 {
     Console.WriteLine(e.Message);
-    Console.WriteLine(
-        e.ToString()
-    ); 
+    Console.WriteLine(e.ToString());
 }
 
 void DisplayHelp(ArgumentParser arguments)
 {
     arguments.DisplayHelpDocs();
 
-    // Prevent closing of the console window until the user presses a key or closes
     Console.WriteLine("Press any key to exit");
     Console.ReadKey();
     return;
@@ -148,9 +111,9 @@ void LogEnvironmentVariables(string debugPath)
     {
         IEnumerable<string> slic3rVariables = Environment.GetEnvironmentVariables()
             .Cast<DictionaryEntry>()
-            .Where(x => x.Key.ToString().StartsWith("SLIC3R"))
+            .Where(x => x.Key.ToString()!.StartsWith("SLIC3R"))
             .ToDictionary(x => x.Key, x => x.Value)
-            .Select(d => string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value)));
+            .Select(d => string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value!)));
 
         string envVarFileName = "slic3r-environment-variables.json";
         string path = Path.Combine(debugPath, envVarFileName);
@@ -198,7 +161,7 @@ async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, stri
 
         LogApiResponse(debugPath, responseContent);
 
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse>(responseContent);
+        var apiResponse = JsonSerializer.Deserialize(responseContent, ApiResponseContext.Default.ApiResponse);
         if (apiResponse == null || string.IsNullOrEmpty(apiResponse.NewSettingId))
         {
             throw new Exception($"Invalid API response: missing newSettingId");
@@ -207,9 +170,7 @@ async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, stri
     }
     catch (Exception e)
     {
-        Console.WriteLine(
-            e.ToString()
-        );
+        Console.WriteLine(e.ToString());
     }
 }
 

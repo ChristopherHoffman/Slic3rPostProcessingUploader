@@ -1,4 +1,3 @@
-﻿using Microsoft.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services.Parsers.AnycubicSlicerNext;
 using Slic3rPostProcessingUploader.Services.Parsers.BambuStudio;
 using Slic3rPostProcessingUploader.Services.Parsers.FLSunSlicer;
@@ -9,9 +8,9 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
 {
     internal class ParserFactory
     {
-        public static IGcodeParser GetParser(ArgumentParser arguments, TelemetryClient telemetryClient, string gcode)
+        public static IGcodeParser GetParser(ArgumentParser arguments, TelemetryService telemetry, string gcode)
         {
-            SendTemplateMetrics(arguments, telemetryClient);
+            SendTemplateMetrics(arguments, telemetry);
 
             // search through the gcode to find the slicer used
 
@@ -32,7 +31,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 return BuildBambuStudioParser(arguments);
             }
             else if (AnycubicSlicerNextParser.IsAnycubicSlicerNext(gcode))
-            { 
+            {
                 return BuildAnycubicSlicerNextParser(arguments);
             }
             else
@@ -47,7 +46,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var orcaResults = orcaParser.CountTemplateMatches(gcode);
                 var orcaPercentMatch = (double) orcaResults.numMatches / (double) orcaResults.numPlaceholders;
 
-                telemetryClient.TrackEvent("OrcaPercentMatch", new Dictionary<string, string> { { "PercentMatch", orcaPercentMatch.ToString() } });
+                telemetry.TrackEvent("OrcaPercentMatch", new Dictionary<string, string> { { "PercentMatch", orcaPercentMatch.ToString() } });
 
                 // Try Prusa
                 var prusaFullTemplate = new PrusaFullNoteTemplate().getNoteTemplate();
@@ -55,7 +54,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var prusaResults = prusaParser.CountTemplateMatches(gcode);
                 var PrusaPercentMatch = (double) prusaResults.numMatches / (double) prusaResults.numPlaceholders;
 
-                telemetryClient.TrackEvent("PrusaPercentMatch", new Dictionary<string, string> { { "PercentMatch", PrusaPercentMatch.ToString() } });
+                telemetry.TrackEvent("PrusaPercentMatch", new Dictionary<string, string> { { "PercentMatch", PrusaPercentMatch.ToString() } });
 
                 // Try FL Sun
                 var flsunFullTemplate = new FLSunFullNoteTemplate().getNoteTemplate();
@@ -63,7 +62,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var flsunResults = flsunParser.CountTemplateMatches(gcode);
                 var flsunPercentMatch = (double) flsunResults.numMatches / (double) flsunResults.numPlaceholders;
 
-                telemetryClient.TrackEvent("FLSunPercentMatch", new Dictionary<string, string> { { "PercentMatch", flsunPercentMatch.ToString() } });
+                telemetry.TrackEvent("FLSunPercentMatch", new Dictionary<string, string> { { "PercentMatch", flsunPercentMatch.ToString() } });
 
                 // Try Bambu Studio
                 var bambuStudioFullTemplate = new BambuStudioFullNoteTemplate().getNoteTemplate();
@@ -71,7 +70,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var bambuStudioResults = bambuStudioParser.CountTemplateMatches(gcode);
                 var bambuStudioPercentMatch = (double)bambuStudioResults.numMatches / (double) bambuStudioResults.numPlaceholders;
 
-                telemetryClient.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, string> { { "PercentMatch", bambuStudioPercentMatch.ToString() } });
+                telemetry.TrackEvent("BambuStudioPercentMatch", new Dictionary<string, string> { { "PercentMatch", bambuStudioPercentMatch.ToString() } });
 
                 // Try Anycubic Slicer Next
                 var anycubicSlicerNextFullTemplate = new AnycubicSlicerNextFullNoteTemplate().getNoteTemplate();
@@ -79,7 +78,7 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
                 var anycubicSlicerNextResults = anycubicSlicerNextParser.CountTemplateMatches(gcode);
                 var anycubicSlicerNextPercentMatch = (double) anycubicSlicerNextResults.numMatches / (double) anycubicSlicerNextResults.numPlaceholders;
 
-                telemetryClient.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, string> { { "PercentMatch", anycubicSlicerNextPercentMatch.ToString() } });
+                telemetry.TrackEvent("AnycubicSlicerNextPercentMatch", new Dictionary<string, string> { { "PercentMatch", anycubicSlicerNextPercentMatch.ToString() } });
 
                 // Compare Results
                 if (orcaPercentMatch > PrusaPercentMatch && orcaPercentMatch > flsunPercentMatch && orcaPercentMatch > bambuStudioPercentMatch && orcaPercentMatch > anycubicSlicerNextPercentMatch)
@@ -163,20 +162,20 @@ namespace Slic3rPostProcessingUploader.Services.Parsers
         }
 
 
-        private static void SendTemplateMetrics(ArgumentParser arguments, TelemetryClient telemetryClient)
+        private static void SendTemplateMetrics(ArgumentParser arguments, TelemetryService telemetry)
         {
             // Track the template used as an event
             if (arguments.UseDefaultNoteTemplate)
             {
-                telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Default" } });
             }
             else if (arguments.UseFullNoteTemplate)
             {
-                telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Full" } });
             }
             else
             {
-                telemetryClient.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
+                telemetry.TrackEvent("Template", new Dictionary<string, string> { { "Template", "Custom" } });
             }
         }
     }

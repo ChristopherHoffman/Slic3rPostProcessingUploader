@@ -8,11 +8,13 @@
     <InvariantGlobalization>true</InvariantGlobalization>
 	<Version>1.1.1</Version>
     <PublishSingleFile>true</PublishSingleFile>
+    <PublishAot>true</PublishAot>
 	<RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.14.0" />
   </ItemGroup>
 
 </Project>
