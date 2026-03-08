@@ -1,52 +1,41 @@
-﻿using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.WorkerService;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.ApplicationInsights;
 using Slic3rPostProcessingUploader.Services;
 using Slic3rPostProcessingUploader.Services.Parsers;
 using System.Collections;
-using System.Globalization;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 
 [assembly: InternalsVisibleTo("Slic3rPostProcessingUploaderUnitTests")]
 
+TelemetryService? telemetry = null;
+
 try
 {
-
-    IServiceCollection services = new ServiceCollection();
-
-    services.AddLogging(loggingBuilder =>
-        {
-                loggingBuilder.AddFilter<ApplicationInsightsLoggerProvider>("Category", LogLevel.Information);
-        });
-
-    services.AddApplicationInsightsTelemetryWorkerService((ApplicationInsightsServiceOptions options) => options.ConnectionString = "InstrumentationKey=44698ebf-3363-4d89-b83d-5a0a616b22f5;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=ff0f0688-8e7b-4a59-b446-2969a28faae2");
-
-
-    IServiceProvider serviceProvider = services.BuildServiceProvider();
-
-    // Obtain logger instance from DI.
-    ILogger<Program> logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-
-    // Obtain TelemetryClient instance from DI, for additional manual tracking or to flush.
-    var telemetryClient = serviceProvider.GetRequiredService<TelemetryClient>();
-
-
     ArgumentParser arguments = new(args);
 
     string newPrintUrl = arguments.UseLocalDev ? "https://localhost:4200/prints/new/cura" : "https://www.3dprintlog.com/prints/new/cura";
     string apiUrl = arguments.UseLocalDev ? "https://localhost:5001/api/Cura/settings" : "https://api.3dprintlog.com/api/Cura/settings";
 
-    if (arguments.DisableTelemetry)
-    {
-        var telemetryConfig = serviceProvider.GetRequiredService<TelemetryConfiguration>();
-        telemetryConfig.DisableTelemetry = true;
-    }
+    telemetry = new TelemetryService(arguments.DisableTelemetry);
+
+    // Track platform info
+    telemetry.TrackEvent("Startup", new Dictionary<string, object> {
+        { "OS", RuntimeInformation.OSDescription },
+        { "Architecture", RuntimeInformation.OSArchitecture.ToString() },
+        { "FrameworkVersion", RuntimeInformation.FrameworkDescription }
+    });
+
+    // Track CLI flags
+    telemetry.TrackEvent("CLIFlags", new Dictionary<string, object> {
+        { "UseDefaultTemplate", arguments.UseDefaultNoteTemplate },
+        { "UseFullTemplate", arguments.UseFullNoteTemplate },
+        { "UseCustomTemplate", !string.IsNullOrEmpty(arguments.NoteTemplatePath) },
+        { "DebugEnabled", !string.IsNullOrEmpty(arguments.DebugPath) },
+        { "LocalDev", arguments.UseLocalDev },
+        { "TelemetryDisabled", arguments.DisableTelemetry }
+    });
 
     if (arguments.DisplayHelp)
     {
@@ -74,50 +63,44 @@ try
     string fileContents = File.ReadAllText(arguments.InputFile);
     LogFileContents(arguments.DebugPath, fileContents);
 
-    CuraSettingDto dto;
+    IGcodeParser parser = ParserFactory.GetParser(arguments, telemetry, fileContents);
 
-    using (telemetryClient.StartOperation<RequestTelemetry>("parsing"))
-    {
+    // Track parse duration
+    var parseStopwatch = Stopwatch.StartNew();
+    CuraSettingDto dto = parser.ParseGcode(fileContents);
+    parseStopwatch.Stop();
 
-        IGcodeParser parser = ParserFactory.GetParser(arguments, telemetryClient, fileContents);
+    var outputName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
+    dto.settings.file_name = outputName != null ? Path.GetFileName(outputName) : Path.GetFileName(arguments.InputFile);
+    dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
+    dto.PluginVersion = new VersionService().GetVersion();
 
-        dto = parser.ParseGcode(fileContents);
+    telemetry.TrackEvent("Parse", new Dictionary<string, object> {
+        { "Slicer", dto.Slicer },
+        { "PluginVersion", dto.PluginVersion },
+        { "CuraVersion", dto.CuraVersion },
+        { "ParseDurationMs", parseStopwatch.ElapsedMilliseconds }
+    });
 
-        var outputName = Environment.GetEnvironmentVariable("SLIC3R_PP_OUTPUT_NAME");
-        dto.settings.file_name = outputName != null ? Path.GetFileName(outputName) : Path.GetFileName(arguments.InputFile);
-        dto.settings.print_name = new TitleService().GetTitle(Path.GetFileNameWithoutExtension(dto.settings.file_name));
-        dto.PluginVersion = new VersionService().GetVersion();
+    LogDto(arguments.DebugPath, dto);
 
-        // Track the slicer, plugin version, and cura version as events
-        telemetryClient.TrackEvent("Parse", new Dictionary<string, string> { { "Slicer", dto.Slicer },
-            { "PluginVersion", dto.PluginVersion },
-        { "CuraVersion", dto.CuraVersion } });
-
-        LogDto(arguments.DebugPath, dto);
-
-    }
-
-    using (telemetryClient.StartOperation<RequestTelemetry>("uploading"))
-    {
-        await UploadToApi(apiUrl, dto, arguments.DebugPath, newPrintUrl);
-    }
-
-    // Give application insights time to flush before closing
-    await telemetryClient.FlushAsync(CancellationToken.None);
+    await UploadToApi(telemetry, apiUrl, dto, arguments.DebugPath, newPrintUrl);
 }
 catch (Exception e)
 {
     Console.WriteLine(e.Message);
-    Console.WriteLine(
-        e.ToString()
-    ); 
+    Console.WriteLine(e.ToString());
+    telemetry?.TrackException(e, "Main");
+}
+finally
+{
+    telemetry?.Dispose();
 }
 
 void DisplayHelp(ArgumentParser arguments)
 {
     arguments.DisplayHelpDocs();
 
-    // Prevent closing of the console window until the user presses a key or closes
     Console.WriteLine("Press any key to exit");
     Console.ReadKey();
     return;
@@ -135,8 +118,9 @@ void SetupDebugging(string debugPath)
         string debugFileName = "slic3r-debug.txt";
         string path = Path.Combine(debugPath, debugFileName);
 
-        StreamWriter sw = new(path, true) { AutoFlush = true };
-        Console.SetOut(sw);
+        var fileWriter = new StreamWriter(path, true) { AutoFlush = true };
+        var dualWriter = new DualWriter(Console.Out, fileWriter);
+        Console.SetOut(dualWriter);
 
         Console.WriteLine($"Debugging enabled, logging to {debugPath}");
     }
@@ -148,9 +132,9 @@ void LogEnvironmentVariables(string debugPath)
     {
         IEnumerable<string> slic3rVariables = Environment.GetEnvironmentVariables()
             .Cast<DictionaryEntry>()
-            .Where(x => x.Key.ToString().StartsWith("SLIC3R"))
+            .Where(x => x.Key.ToString()!.StartsWith("SLIC3R"))
             .ToDictionary(x => x.Key, x => x.Value)
-            .Select(d => string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value)));
+            .Select(d => string.Format("\"{0}\": [{1}]", d.Key, string.Join(",", d.Value!)));
 
         string envVarFileName = "slic3r-environment-variables.json";
         string path = Path.Combine(debugPath, envVarFileName);
@@ -178,7 +162,7 @@ void LogDto(string debugPath, CuraSettingDto dto)
     }
 }
 
-async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, string newPrintUrl)
+async Task UploadToApi(TelemetryService telemetry, string apiUrl, CuraSettingDto dto, string debugPath, string newPrintUrl)
 {
     using HttpClient client = new();
     using StringContent content = new(dto.ToJSON(), Encoding.UTF8, "application/json");
@@ -193,23 +177,38 @@ async Task UploadToApi(string apiUrl, CuraSettingDto dto, string debugPath, stri
         if (!response.IsSuccessStatusCode)
         {
             LogApiResponse(debugPath, responseContent);
+            telemetry.TrackEvent("UploadResult", new Dictionary<string, object> {
+                { "Success", false },
+                { "StatusCode", (int)response.StatusCode },
+                { "Reason", response.ReasonPhrase ?? "Unknown" }
+            });
             throw new Exception($"Failed to upload to 3dprintlog.com: {response.StatusCode}");
         }
 
         LogApiResponse(debugPath, responseContent);
 
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse>(responseContent);
+        var apiResponse = JsonSerializer.Deserialize(responseContent, ApiResponseContext.Default.ApiResponse);
         if (apiResponse == null || string.IsNullOrEmpty(apiResponse.NewSettingId))
         {
+            telemetry.TrackEvent("UploadResult", new Dictionary<string, object> {
+                { "Success", false },
+                { "StatusCode", (int)response.StatusCode },
+                { "Reason", "Invalid API response: missing newSettingId" }
+            });
             throw new Exception($"Invalid API response: missing newSettingId");
         }
+
+        telemetry.TrackEvent("UploadResult", new Dictionary<string, object> {
+            { "Success", true },
+            { "StatusCode", (int)response.StatusCode }
+        });
+
         new Browser().Open($"{newPrintUrl}?cura_version={dto.CuraVersion}&plugin_version={dto.PluginVersion}&settingId={apiResponse.NewSettingId}");
     }
     catch (Exception e)
     {
-        Console.WriteLine(
-            e.ToString()
-        );
+        Console.WriteLine(e.ToString());
+        telemetry.TrackException(e, "UploadToApi");
     }
 }
 

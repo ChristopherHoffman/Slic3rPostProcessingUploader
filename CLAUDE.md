@@ -17,7 +17,7 @@ dotnet publish --configuration Release
 
 ## Architecture
 
-This is a .NET 8 console application that acts as a post-processing script for 3D printer slicers. After a slicer exports G-code, this tool parses the file, extracts print settings, and opens https://www.3dprintlog.com with pre-filled print details.
+This is a .NET 10 console application that acts as a post-processing script for 3D printer slicers. After a slicer exports G-code, this tool parses the file, extracts print settings, and opens https://www.3dprintlog.com with pre-filled print details.
 
 ### Data Flow
 
@@ -66,3 +66,7 @@ Slic3rPostProcessingUploader.exe --debug C:\path\to\debug\
 ```
 
 Outputs: environment variables, raw G-code, parsed DTO, and API response to the specified directory.
+
+## Documentation
+
+When making user-facing changes (new CLI flags, new features, behavior changes), update the README.md to document them. The Options section in the README should match the available CLI arguments in ArgumentParser.cs.

@@ -42,11 +42,13 @@ Mac/Linux:
 
 #### Example of OrcaSlicer on Windows:
 
-![Screenshot of OrcaSlicer with the Other Tab visible. In the Post-Processing Scripts section, we see the example of the absolute path to a windows .exe](docs\assets\OrcaSlicerExample.png)
+![Screenshot of OrcaSlicer with the Other Tab visible. In the Post-Processing Scripts section, we see the example of the absolute path to a windows .exe](docs/assets/OrcaSlicerExample.png)
 
 ## Options:
 
 `--help`, `-h`: Display this help message. No settings will be uploaded if help is displayed.
+
+`--version`, `-v`: Display the version number and exit.
 
 `--local-dev`: Use the local development environment
 
